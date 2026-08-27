@@ -89,6 +89,23 @@ export async function fetchDietMeals(dietId: string): Promise<Meal[]> {
   });
 }
 
+// Actualiza los datos básicos de un paciente ya guardado
+export async function updatePatient(patientId: string, patient: Patient): Promise<void> {
+  if (!supabase) throw new Error('Supabase no está configurado');
+  const { error } = await supabase
+    .from('patients')
+    .update({
+      name: patient.nombre,
+      age: patient.edad,
+      sex: patient.sexo,
+      current_weight: patient.pesoActual,
+      ideal_weight: patient.pesoIdeal || null,
+      height_cm: patient.talla,
+    })
+    .eq('id', patientId);
+  if (error) throw error;
+}
+
 // Guarda un paciente y su dieta actual (paciente + dieta + comidas + ingredientes)
 export async function savePatientDiet(
   userId: string,

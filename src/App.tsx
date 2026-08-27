@@ -1,6 +1,13 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { UserPlus, UtensilsCrossed, Users, ChefHat, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  UserPlus, Users, ChefHat, PanelLeftClose, PanelLeftOpen,
+  Home, Search, Calendar, BookOpen, Apple, UtensilsCrossed, Zap,
+  TrendingUp, Scale, BarChart3, Receipt, Settings, HelpCircle,
+  PlayCircle, LogOut,
+} from 'lucide-react';
 import PatientForm from './components/PatientForm';
 import CalorieCalculator from './components/CalorieCalculator';
 import MacroDistributionStep from './components/MacroDistribution';
@@ -8,16 +15,22 @@ import FoodEquivalents from './components/FoodEquivalents';
 import DietPlan from './components/DietPlan';
 import PatientsPanel from './components/PatientsPanel';
 import RecipesPanel from './components/RecipesPanel';
+import ComingSoonPanel from './components/ComingSoonPanel';
 import type { Patient, MetodoCalculo, MacroDistribution, FoodGroup, Meal } from './types';
 import { initGrupos } from './utils/foodGroups';
 import { activityLevels } from './utils/calculations';
-import logoSrc from './assets/logo.png';
-import { abrirPlantillaSemanal } from './utils/plantillaSemanal';
 import { AuthGate } from './components/Auth';
+import { supabase } from './lib/supabase';
 
 const STEPS = ['Paciente', 'Calorías', 'Macros', 'Equivalentes', 'Dieta'];
 
-type View = 'wizard' | 'patients' | 'recipes';
+type View = 'wizard' | 'patients' | 'recipes' | 'placeholder';
+
+interface PlaceholderInfo {
+  icon: ReactNode;
+  title: string;
+  description: string;
+}
 
 export default function App() {
   return (
@@ -27,13 +40,15 @@ export default function App() {
   );
 }
 
+const blankPatient = (): Patient => ({ nombre: '', edad: 0, sexo: 'F', pesoActual: 0, pesoIdeal: 0, talla: 0 });
+
 function AppShell({ session }: { session: Session }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [view, setView] = useState<View>('wizard');
+  const [placeholder, setPlaceholder] = useState<PlaceholderInfo | null>(null);
+  const [recipeStarted, setRecipeStarted] = useState(false);
   const [step, setStep] = useState(0);
-  const [patient, setPatient] = useState<Patient>({
-    nombre: '', edad: 0, sexo: 'F', pesoActual: 0, pesoIdeal: 0, talla: 0,
-  });
+  const [patient, setPatient] = useState<Patient>(blankPatient);
   const [metodo, setMetodo] = useState<MetodoCalculo>('harris-benedict');
   const [actividadFisica, setActividadFisica] = useState(0);
   const [factorActividad, setFactorActividad] = useState(activityLevels[0].factor);
@@ -42,16 +57,56 @@ function AppShell({ session }: { session: Session }) {
   const [grupos, setGrupos] = useState<FoodGroup[]>(initGrupos());
   const [comidas, setComidas] = useState<Meal[]>([]);
 
+  const inWizard = view === 'wizard' || (view === 'recipes' && recipeStarted);
+
+  const startFresh = () => {
+    setPatient(blankPatient());
+    setMetodo('harris-benedict');
+    setActividadFisica(0);
+    setFactorActividad(activityLevels[0].factor);
+    setGet(0);
+    setMacros({ hdec: 60, prot: 15, lip: 25 });
+    setGrupos(initGrupos());
+    setComidas([]);
+    setStep(0);
+  };
+
+  const openPlaceholder = (icon: ReactNode, title: string, description: string) => {
+    setView('placeholder');
+    setPlaceholder({ icon, title, description });
+  };
+
+  const pending = (label: string, Icon: LucideIcon, description: string) => ({
+    icon: <Icon size={20} />,
+    label,
+    active: view === 'placeholder' && placeholder?.title === label,
+    onClick: () => openPlaceholder(<Icon size={32} className="text-sky-500" />, label, description),
+  });
+
   const sidebarItems = [
+    pending('Inicio', Home, 'Panel con la actividad reciente de tus pacientes.'),
     { icon: <UserPlus size={20} />, label: 'Nuevo paciente', active: view === 'wizard', onClick: () => { setView('wizard'); setStep(0); } },
-    { icon: <UtensilsCrossed size={20} />, label: 'Nueva dieta', active: false, onClick: () => abrirPlantillaSemanal(logoSrc, get, patient, macros, comidas) },
-    { icon: <Users size={20} />, label: 'Pacientes atendidos', active: view === 'patients', onClick: () => setView('patients') },
-    { icon: <ChefHat size={20} />, label: 'Crear receta', active: view === 'recipes', onClick: () => setView('recipes') },
+    { icon: <Users size={20} />, label: 'Mis pacientes', active: view === 'patients', onClick: () => setView('patients') },
+    pending('Buscar paciente', Search, 'Busca rápidamente un paciente por nombre.'),
+    pending('Calendario de citas', Calendar, 'Agenda y da seguimiento a las citas de tus pacientes.'),
+    { icon: <ChefHat size={20} />, label: 'Crear receta', active: view === 'recipes', onClick: () => { setView('recipes'); setRecipeStarted(false); } },
+    pending('Mis recetas', BookOpen, 'Biblioteca de recetas reutilizables para armar dietas más rápido.'),
+    pending('Mis alimentos', Apple, 'Administra tu base de datos de alimentos y equivalencias.'),
+    pending('Dietas y platos', UtensilsCrossed, 'Plantillas de dietas y platillos listos para asignar.'),
+    pending('Dietas instantáneas', Zap, 'Genera una dieta express a partir de una plantilla.'),
+    pending('Curvas de crecimiento', TrendingUp, 'Sigue el crecimiento y desarrollo de pacientes pediátricos.'),
+    pending('Equivalentes automáticos', Scale, 'Calculadora rápida de equivalentes fuera del asistente de dieta.'),
+    pending('Reportes poblacionales', BarChart3, 'Estadísticas agregadas de todos tus pacientes.'),
+    pending('Reportes de pagos', Receipt, 'Control de cobros y pagos de consultas.'),
+    pending('Configuración', Settings, 'Ajustes de tu cuenta y del consultorio.'),
+    pending('Ayuda', HelpCircle, 'Centro de ayuda y preguntas frecuentes.'),
+    pending('Videos', PlayCircle, 'Tutoriales en video sobre el uso del sistema.'),
+    { icon: <LogOut size={20} />, label: 'Salir', active: false, onClick: () => { void supabase?.auth.signOut(); } },
   ];
 
   return (
     <div className="flex min-h-screen bg-slate-100">
-      <aside className={`bg-sky-500 flex flex-col items-stretch py-4 gap-2 flex-shrink-0 transition-all duration-200 ${sidebarOpen ? 'w-56 px-3' : 'w-14 px-2 items-center'}`}>
+      <aside className={`bg-sky-500 flex flex-col items-stretch py-4 gap-2 flex-shrink-0 h-screen sticky top-0 overflow-y-auto transition-all duration-200 ${sidebarOpen ? 'w-56 px-3' : 'w-14 px-2 items-center'}`}>
         <button
           title={sidebarOpen ? 'Ocultar menú' : 'Mostrar menú'}
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -78,7 +133,7 @@ function AppShell({ session }: { session: Session }) {
       </aside>
 
       <main className="flex-1 flex flex-col">
-        {view === 'wizard' && (
+        {inWizard && (
           <div className="bg-white border-b border-gray-200 px-8 py-3">
             <div className="flex items-center gap-2 text-sm">
               {STEPS.map((s, i) => (
@@ -111,16 +166,21 @@ function AppShell({ session }: { session: Session }) {
 
         <div className="flex-1 p-8">
           {view === 'patients' && <PatientsPanel />}
-          {view === 'recipes' && <RecipesPanel />}
+          {view === 'recipes' && !recipeStarted && (
+            <RecipesPanel onStart={() => { startFresh(); setRecipeStarted(true); }} />
+          )}
+          {view === 'placeholder' && placeholder && (
+            <ComingSoonPanel icon={placeholder.icon} title={placeholder.title} description={placeholder.description} />
+          )}
 
-          {view === 'wizard' && step === 0 && (
+          {inWizard && step === 0 && (
             <PatientForm
               patient={patient}
               onChange={setPatient}
               onNext={() => setStep(1)}
             />
           )}
-          {view === 'wizard' && step === 1 && (
+          {inWizard && step === 1 && (
             <CalorieCalculator
               patient={patient}
               metodo={metodo}
@@ -135,7 +195,7 @@ function AppShell({ session }: { session: Session }) {
               onBack={() => setStep(0)}
             />
           )}
-          {view === 'wizard' && step === 2 && (
+          {inWizard && step === 2 && (
             <MacroDistributionStep
               get={get}
               pesoActual={patient.pesoActual}
@@ -145,7 +205,7 @@ function AppShell({ session }: { session: Session }) {
               onBack={() => setStep(1)}
             />
           )}
-          {view === 'wizard' && step === 3 && (
+          {inWizard && step === 3 && (
             <FoodEquivalents
               get={get}
               macros={macros}
@@ -155,7 +215,7 @@ function AppShell({ session }: { session: Session }) {
               onBack={() => setStep(2)}
             />
           )}
-          {view === 'wizard' && step === 4 && (
+          {inWizard && step === 4 && (
             <DietPlan
               get={get}
               patient={patient}
