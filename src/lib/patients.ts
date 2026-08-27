@@ -22,6 +22,19 @@ export interface SavedDiet {
   created_at: string;
 }
 
+export interface SavedDietWithPatient extends SavedDiet {
+  patient_name: string;
+}
+
+export const METODO_LABEL: Record<string, string> = {
+  'harris-benedict':  'Harris-Benedict',
+  'fao-oms-onu':      'FAO/OMS/ONU',
+  'valencia':         'Valencia',
+  'mifflin-st-jeor':  'Mifflin-St Jeor',
+  'gramos-por-kilo':  'g/kg de peso',
+  'calorias-por-kilo':'kcal/kg de peso',
+};
+
 // Trae los pacientes del nutriólogo autenticado, más recientes primero
 export async function fetchPatients(): Promise<SavedPatient[]> {
   if (!supabase) return [];
@@ -43,6 +56,20 @@ export async function fetchDietsForPatient(patientId: string): Promise<SavedDiet
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data ?? [];
+}
+
+// Trae todas las dietas del nutriólogo con el nombre del paciente, más recientes primero
+export async function fetchAllDiets(): Promise<SavedDietWithPatient[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('diets')
+    .select('*, patients(name)')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(row => {
+    const { patients, ...diet } = row as SavedDiet & { patients: { name: string } | null };
+    return { ...diet, patient_name: patients?.name ?? 'Paciente' };
+  });
 }
 
 // Reconstruye las comidas/preparaciones/ingredientes de una dieta guardada

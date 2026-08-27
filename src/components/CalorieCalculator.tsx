@@ -77,7 +77,7 @@ export default function CalorieCalculator({
             <select
               value={metodo}
               onChange={e => handleMetodo(e.target.value as MetodoCalculo)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
             >
               {metodos.map(m => (
                 <option key={m.value} value={m.value}>{m.label}</option>
@@ -105,19 +105,19 @@ export default function CalorieCalculator({
                     recalcular(metodo, factorActividad, gramosKilo, v);
                   }
                 }}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
               />
             </div>
           )}
 
           <div className="flex items-center gap-4">
-            <label className="text-sm font-medium text-blue-500 min-w-max">
+            <label className="text-sm font-medium text-emerald-500 min-w-max">
               Porcentaje de actividad física
             </label>
             <select
               value={actividadFisica}
               onChange={e => handleActividad(parseInt(e.target.value))}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 flex-1"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 flex-1"
             >
               {activityLevels.map(a => (
                 <option key={a.value} value={a.value}>{a.label}</option>
@@ -145,7 +145,7 @@ export default function CalorieCalculator({
                 max={2.5}
                 value={factorActividad}
                 onChange={e => handleFactor(parseFloat(e.target.value) || 1)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 w-32"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 w-32"
               />
             </div>
           )}
@@ -165,7 +165,7 @@ export default function CalorieCalculator({
           <button
             onClick={onNext}
             disabled={get <= 0}
-            className="flex-1 py-3 rounded-xl font-medium text-white bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 transition-colors"
+            className="flex-1 py-3 rounded-xl font-medium text-white bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-300 disabled:text-gray-500 transition-colors"
           >
             Continuar →
           </button>

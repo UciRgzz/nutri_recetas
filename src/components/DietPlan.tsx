@@ -513,7 +513,7 @@ function descargar() {
             <button
               onClick={regenerate}
               title="Regenerar dieta"
-              className="flex items-center gap-1.5 text-xs text-blue-500 hover:text-blue-700 border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50"
+              className="flex items-center gap-1.5 text-xs text-emerald-500 hover:text-emerald-700 border border-emerald-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50"
             >
               <RefreshCw size={13} /> Regenerar
             </button>
@@ -541,7 +541,7 @@ function descargar() {
             <button
               onClick={exportarPDF}
               title="Exportar PDF"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs hover:bg-amber-600 transition-colors"
             >
               <Printer size={14} /> Exportar PDF
             </button>
@@ -556,7 +556,7 @@ function descargar() {
               onClick={() => setActiveTab(name)}
               className={`flex items-center gap-1.5 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors ${
                 activeTab === name
-                  ? 'border-blue-500 text-blue-600 font-medium'
+                  ? 'border-emerald-500 text-emerald-600 font-medium'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -641,7 +641,7 @@ function descargar() {
                     </div>
 
                     <div className="px-4 py-2 border-t border-gray-50">
-                      <button onClick={() => addIngredient(prep.id)} className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-600">
+                      <button onClick={() => addIngredient(prep.id)} className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-600">
                         <Plus size={11} /> Agregar alimento
                       </button>
                     </div>
@@ -664,7 +664,7 @@ function descargar() {
             <button
               onClick={() => setBottomTab('equivalentes')}
               className={`px-6 py-2 text-sm flex items-center gap-1.5 border-b-2 transition-colors ${
-                bottomTab === 'equivalentes' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'
+                bottomTab === 'equivalentes' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-500'
               }`}
             >
               Total de equivalentes
@@ -672,7 +672,7 @@ function descargar() {
             <button
               onClick={() => setBottomTab('nutrimentos')}
               className={`px-6 py-2 text-sm flex items-center gap-1.5 border-b-2 transition-colors ${
-                bottomTab === 'nutrimentos' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'
+                bottomTab === 'nutrimentos' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-500'
               }`}
             >
               Nutrimentos

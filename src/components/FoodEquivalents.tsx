@@ -48,7 +48,7 @@ export default function FoodEquivalents({ get, macros, grupos, onChange, onNext,
         <div className="flex justify-center gap-3 mb-4">
           <button
             onClick={() => onChange(generarEquivalentesAuto(get, macros, grupos))}
-            className="flex items-center gap-2 px-6 py-2 border border-blue-400 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+            className="flex items-center gap-2 px-6 py-2 border border-emerald-400 text-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors font-medium"
           >
             <Sparkles size={16} />
             Sugerir equivalentes
@@ -91,7 +91,7 @@ export default function FoodEquivalents({ get, macros, grupos, onChange, onNext,
                         value={g.equivalentes || ''}
                         placeholder="0"
                         onChange={e => setEq(i, parseFloat(e.target.value) || 0)}
-                        className="w-20 border border-gray-200 rounded-lg px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm"
+                        className="w-20 border border-gray-200 rounded-lg px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-emerald-300 text-sm"
                       />
                     </td>
                     <td className="py-2 text-center text-gray-600">{hdec || 0}</td>

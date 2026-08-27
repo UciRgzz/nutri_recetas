@@ -65,7 +65,7 @@ export default function MacroDistributionStep({ get, pesoActual, macros, onChang
             value={pct}
             min={0} max={100}
             onChange={e => setMacro(macroKey, parseInt(e.target.value) || 0)}
-            className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-300"
           />
         </div>
       </td>
@@ -117,12 +117,12 @@ export default function MacroDistributionStep({ get, pesoActual, macros, onChang
                 <Row label="Lip"  color={COLORS.lip}  gr={grLip}  cal={calLip}  pct={macros.lip}  grKg={pesoActual > 0 ? grLip  / pesoActual : 0} macroKey="lip"  />
                 <tr className="border-t border-gray-200">
                   <td colSpan={2} className="py-3 text-gray-500">Total</td>
-                  <td className="py-3 text-center font-bold text-blue-500">{calTotal} cal</td>
+                  <td className="py-3 text-center font-bold text-emerald-500">{calTotal} cal</td>
                   <td colSpan={2} />
                 </tr>
                 <tr>
                   <td colSpan={2} className="py-2 text-gray-500">Calorías por kilo</td>
-                  <td className="py-2 text-center font-bold text-blue-500">{calPerKg} cal</td>
+                  <td className="py-2 text-center font-bold text-emerald-500">{calPerKg} cal</td>
                   <td colSpan={2} />
                 </tr>
               </tbody>
@@ -137,7 +137,7 @@ export default function MacroDistributionStep({ get, pesoActual, macros, onChang
           <button
             onClick={onNext}
             disabled={totalPct !== 100}
-            className="flex-1 py-3 rounded-xl font-medium text-white bg-blue-500 hover:bg-blue-600 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
+            className="flex-1 py-3 rounded-xl font-medium text-white bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
           >
             Continuar →
           </button>

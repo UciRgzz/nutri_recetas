@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js';
 import type { LucideIcon } from 'lucide-react';
 import {
   UserPlus, Users, ChefHat, PanelLeftClose, PanelLeftOpen,
-  Home, Search, Calendar, BookOpen, Apple, UtensilsCrossed, Zap,
+  Home, Calendar, BookOpen, Apple, UtensilsCrossed, Zap,
   TrendingUp, Scale, BarChart3, Receipt, Settings, HelpCircle,
   PlayCircle, LogOut,
 } from 'lucide-react';
@@ -16,15 +16,19 @@ import DietPlan from './components/DietPlan';
 import PatientsPanel from './components/PatientsPanel';
 import RecipesPanel from './components/RecipesPanel';
 import ComingSoonPanel from './components/ComingSoonPanel';
+import CalendarPanel from './components/CalendarPanel';
+import MyRecipesPanel from './components/MyRecipesPanel';
+import HomePanel from './components/HomePanel';
 import type { Patient, MetodoCalculo, MacroDistribution, FoodGroup, Meal } from './types';
 import { initGrupos } from './utils/foodGroups';
 import { activityLevels } from './utils/calculations';
 import { AuthGate } from './components/Auth';
 import { supabase } from './lib/supabase';
+import logoSrc from './assets/logo.png';
 
 const STEPS = ['Paciente', 'Calorías', 'Macros', 'Equivalentes', 'Dieta'];
 
-type View = 'wizard' | 'patients' | 'recipes' | 'placeholder';
+type View = 'home' | 'wizard' | 'patients' | 'recipes' | 'calendar' | 'my-recipes' | 'placeholder';
 
 interface PlaceholderInfo {
   icon: ReactNode;
@@ -44,7 +48,7 @@ const blankPatient = (): Patient => ({ nombre: '', edad: 0, sexo: 'F', pesoActua
 
 function AppShell({ session }: { session: Session }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [view, setView] = useState<View>('wizard');
+  const [view, setView] = useState<View>('home');
   const [placeholder, setPlaceholder] = useState<PlaceholderInfo | null>(null);
   const [recipeStarted, setRecipeStarted] = useState(false);
   const [step, setStep] = useState(0);
@@ -80,17 +84,16 @@ function AppShell({ session }: { session: Session }) {
     icon: <Icon size={20} />,
     label,
     active: view === 'placeholder' && placeholder?.title === label,
-    onClick: () => openPlaceholder(<Icon size={32} className="text-sky-500" />, label, description),
+    onClick: () => openPlaceholder(<Icon size={32} className="text-emerald-500" />, label, description),
   });
 
   const sidebarItems = [
-    pending('Inicio', Home, 'Panel con la actividad reciente de tus pacientes.'),
+    { icon: <Home size={20} />, label: 'Inicio', active: view === 'home', onClick: () => setView('home') },
     { icon: <UserPlus size={20} />, label: 'Nuevo paciente', active: view === 'wizard', onClick: () => { setView('wizard'); setStep(0); } },
     { icon: <Users size={20} />, label: 'Mis pacientes', active: view === 'patients', onClick: () => setView('patients') },
-    pending('Buscar paciente', Search, 'Busca rápidamente un paciente por nombre.'),
-    pending('Calendario de citas', Calendar, 'Agenda y da seguimiento a las citas de tus pacientes.'),
+    { icon: <Calendar size={20} />, label: 'Calendario de citas', active: view === 'calendar', onClick: () => setView('calendar') },
     { icon: <ChefHat size={20} />, label: 'Crear receta', active: view === 'recipes', onClick: () => { setView('recipes'); setRecipeStarted(false); } },
-    pending('Mis recetas', BookOpen, 'Biblioteca de recetas reutilizables para armar dietas más rápido.'),
+    { icon: <BookOpen size={20} />, label: 'Mis recetas', active: view === 'my-recipes', onClick: () => setView('my-recipes') },
     pending('Mis alimentos', Apple, 'Administra tu base de datos de alimentos y equivalencias.'),
     pending('Dietas y platos', UtensilsCrossed, 'Plantillas de dietas y platillos listos para asignar.'),
     pending('Dietas instantáneas', Zap, 'Genera una dieta express a partir de una plantilla.'),
@@ -105,15 +108,20 @@ function AppShell({ session }: { session: Session }) {
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
-      <aside className={`bg-sky-500 flex flex-col items-stretch py-4 gap-2 flex-shrink-0 h-screen sticky top-0 overflow-y-auto transition-all duration-200 ${sidebarOpen ? 'w-56 px-3' : 'w-14 px-2 items-center'}`}>
-        <button
-          title={sidebarOpen ? 'Ocultar menú' : 'Mostrar menú'}
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="w-10 h-10 flex items-center justify-center rounded-xl text-sky-100 hover:bg-white/10 hover:text-white self-end mb-2"
-        >
-          {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
-        </button>
+    <div className="flex min-h-screen bg-gradient-to-br from-emerald-50 via-slate-50 to-amber-50">
+      <aside className={`bg-emerald-600 flex flex-col items-stretch py-4 gap-2 flex-shrink-0 h-screen sticky top-0 overflow-y-auto transition-all duration-200 ${sidebarOpen ? 'w-56 px-3' : 'w-14 px-2 items-center'}`}>
+        <div className={`flex items-center mb-2 ${sidebarOpen ? 'justify-between px-1' : 'flex-col gap-2'}`}>
+          {sidebarOpen && (
+            <img src={logoSrc} alt="Lic. Nutrición" className="h-8 w-8 rounded-full bg-white object-cover flex-shrink-0" />
+          )}
+          <button
+            title={sidebarOpen ? 'Ocultar menú' : 'Mostrar menú'}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-emerald-100 hover:bg-white/10 hover:text-white"
+          >
+            {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
+          </button>
+        </div>
 
         {sidebarItems.map((item, i) => (
           <button
@@ -123,7 +131,7 @@ function AppShell({ session }: { session: Session }) {
             className={`flex items-center gap-3 h-10 rounded-xl transition-colors ${sidebarOpen ? 'px-3 justify-start' : 'w-10 justify-center'} ${
               item.active
                 ? 'bg-white/20 text-white'
-                : 'text-sky-100 hover:bg-white/10 hover:text-white'
+                : 'text-emerald-100 hover:bg-white/10 hover:text-white'
             }`}
           >
             {item.icon}
@@ -134,7 +142,7 @@ function AppShell({ session }: { session: Session }) {
 
       <main className="flex-1 flex flex-col">
         {inWizard && (
-          <div className="bg-white border-b border-gray-200 px-8 py-3">
+          <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 px-8 py-3">
             <div className="flex items-center gap-2 text-sm">
               {STEPS.map((s, i) => (
                 <span key={i} className="flex items-center gap-2">
@@ -142,15 +150,15 @@ function AppShell({ session }: { session: Session }) {
                     onClick={() => i < step ? setStep(i) : undefined}
                     className={`flex items-center gap-1.5 transition-colors ${
                       i === step
-                        ? 'text-blue-600 font-semibold'
+                        ? 'text-emerald-600 font-semibold'
                         : i < step
-                        ? 'text-blue-400 hover:text-blue-600 cursor-pointer'
+                        ? 'text-emerald-400 hover:text-emerald-600 cursor-pointer'
                         : 'text-gray-300 cursor-default'
                     }`}
                   >
                     <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
-                      i === step ? 'bg-blue-500 text-white' :
-                      i < step   ? 'bg-blue-200 text-blue-600' :
+                      i === step ? 'bg-emerald-500 text-white' :
+                      i < step   ? 'bg-emerald-200 text-emerald-600' :
                                    'bg-gray-100 text-gray-400'
                     }`}>
                       {i + 1}
@@ -165,7 +173,18 @@ function AppShell({ session }: { session: Session }) {
         )}
 
         <div className="flex-1 p-8">
+          {view === 'home' && (
+            <HomePanel
+              userEmail={session.user.email}
+              onNewPatient={() => { startFresh(); setView('wizard'); }}
+              onCreateRecipe={() => { setView('recipes'); setRecipeStarted(false); }}
+              onPatients={() => setView('patients')}
+              onCalendar={() => setView('calendar')}
+            />
+          )}
           {view === 'patients' && <PatientsPanel />}
+          {view === 'calendar' && <CalendarPanel userId={session.user.id} />}
+          {view === 'my-recipes' && <MyRecipesPanel />}
           {view === 'recipes' && !recipeStarted && (
             <RecipesPanel onStart={() => { startFresh(); setRecipeStarted(true); }} />
           )}
