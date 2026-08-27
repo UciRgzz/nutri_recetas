@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, Loader2, Users, Pencil, Check, X, Search } from 'lucide-react';
-import { fetchPatients, fetchDietsForPatient, updatePatient, type SavedPatient, type SavedDiet } from '../lib/patients';
+import { ChevronDown, ChevronRight, Loader2, Users, Pencil, Check, X, Search, CalendarDays } from 'lucide-react';
+import { fetchPatients, fetchDietsForPatient, fetchDietMeals, updatePatient, type SavedPatient, type SavedDiet } from '../lib/patients';
 import { calcularIMC, clasificarIMC } from '../utils/calculations';
+import { abrirPlantillaSemanal } from '../utils/plantillaSemanal';
 import type { Patient } from '../types';
+import logoSrc from '../assets/logo.png';
 import DietDetailRow from './DietDetailRow';
 
 function toPatient(p: SavedPatient): Patient {
@@ -124,6 +126,27 @@ function PatientRow({ patient, expanded, onToggle, onUpdated }: {
     setEditing(true);
   };
 
+  const exportWeeklyMenu = async () => {
+    if (!diets || diets.length === 0) return;
+    const latestDiet = diets[0];
+    try {
+      const meals = await fetchDietMeals(latestDiet.id);
+      await abrirPlantillaSemanal(
+        logoSrc,
+        latestDiet.calories,
+        toPatient(patient),
+        {
+          hdec: latestDiet.carbs_pct,
+          prot: latestDiet.protein_pct,
+          lip: latestDiet.fat_pct,
+        },
+        meals
+      );
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'No se pudo abrir la plantilla semanal');
+    }
+  };
+
   const save = async () => {
     setSaving(true);
     setSaveError('');
@@ -210,6 +233,15 @@ function PatientRow({ patient, expanded, onToggle, onUpdated }: {
         <button onClick={startEdit} title="Editar paciente" className="text-gray-400 hover:text-emerald-600 p-1">
           <Pencil size={14} />
         </button>
+        {diets && diets.length > 0 && (
+          <button
+            onClick={() => { void exportWeeklyMenu(); }}
+            title="Plantilla semanal"
+            className="text-gray-400 hover:text-emerald-600 p-1"
+          >
+            <CalendarDays size={14} />
+          </button>
+        )}
         <span className="text-xs text-gray-400">
           {new Date(patient.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })}
         </span>
