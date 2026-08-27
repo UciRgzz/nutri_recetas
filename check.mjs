@@ -1,0 +1,14 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch({ executablePath: 'C:\\Users\\ucima\\AppData\\Local\\ms-playwright\\chromium-1223\\chrome-win64\\chrome.exe' });
+const page = await browser.newPage();
+await page.setViewportSize({ width: 1280, height: 800 });
+const errors = [];
+page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+page.on('pageerror', e => errors.push(e.message));
+await page.goto('http://localhost:5173', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(4000);
+await page.screenshot({ path: 'C:/Users/ucima/AppData/Local/Temp/nutri-check.png' });
+console.log('JS ERRORS:', JSON.stringify(errors, null, 2));
+const html = await page.evaluate(() => document.getElementById('root')?.innerHTML || 'EMPTY ROOT');
+console.log('ROOT HTML:', html.slice(0, 600));
+await browser.close();
