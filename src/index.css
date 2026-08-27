@@ -34,3 +34,23 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
+
+@keyframes float-drift {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(var(--dy, -18px)) rotate(calc(var(--r, 0deg) * -1)); }
+}
+
+.floating-icon {
+  animation-name: float-drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(20px, -24px) scale(1.08); }
+}
+
+.floating-blob {
+  animation: blob-drift 14s ease-in-out infinite;
+}

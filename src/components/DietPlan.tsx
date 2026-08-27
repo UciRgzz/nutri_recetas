@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import type { Meal, Preparation, Ingredient, FoodGroup, Patient, MacroDistribution, MetodoCalculo } from '../types';
 import {
   Plus, Trash2, AlarmClock, UtensilsCrossed, Sun, Sunset,
-  Moon, Coffee, ArrowLeft, Printer, RefreshCw, CalendarDays,
+  Moon, Coffee, ArrowLeft, Printer, RefreshCw, CalendarDays, Save, Check,
 } from 'lucide-react';
 import { AlarmClockOff } from 'lucide-react';
 import { generateDiet, calcEquivTable } from '../utils/dietGenerator';
 import { calcularIMC, clasificarIMC } from '../utils/calculations';
 import { abrirPlantillaSemanal } from '../utils/plantillaSemanal';
+import { savePatientDiet } from '../lib/patients';
 import logoSrc from '../assets/logo.png';
 
 async function imgToDataUrl(src: string): Promise<string> {
@@ -47,13 +48,17 @@ interface Props {
   metodo: MetodoCalculo;
   grupos: FoodGroup[];
   comidas: Meal[];
+  userId: string;
   onChange: (meals: Meal[]) => void;
   onBack: () => void;
 }
 
-export default function DietPlan({ get, patient, macros, metodo, grupos, comidas, onChange, onBack }: Props) {
+export default function DietPlan({ get, patient, macros, metodo, grupos, comidas, userId, onChange, onBack }: Props) {
   const [activeTab, setActiveTab] = useState('Al despertar');
   const [bottomTab, setBottomTab] = useState<'nutrimentos' | 'equivalentes'>('equivalentes');
+  const [guardando, setGuardando] = useState(false);
+  const [guardado, setGuardado] = useState(false);
+  const [errorGuardar, setErrorGuardar] = useState('');
 
   // Auto-generate on mount (always generate fresh diet when arriving at this step)
   useEffect(() => {
@@ -66,6 +71,20 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
   const activeMeal = meals.find(m => m.nombre === activeTab);
 
   const updateMeals = (updated: Meal[]) => onChange(updated);
+
+  const guardarPaciente = async () => {
+    setGuardando(true);
+    setErrorGuardar('');
+    try {
+      await savePatientDiet(userId, patient, get, metodo, macros, meals);
+      setGuardado(true);
+      setTimeout(() => setGuardado(false), 3000);
+    } catch (err) {
+      setErrorGuardar(err instanceof Error ? err.message : 'No se pudo guardar el paciente');
+    } finally {
+      setGuardando(false);
+    }
+  };
 
   const regenerate = () => {
     const generated = generateDiet(grupos, get);
@@ -500,6 +519,18 @@ function descargar() {
             </button>
           </div>
           <div className="flex items-center gap-2">
+            {errorGuardar && <span className="text-xs text-red-500 max-w-[180px]">{errorGuardar}</span>}
+            <button
+              onClick={guardarPaciente}
+              disabled={guardando || !patient.nombre}
+              title="Guardar paciente y dieta"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors disabled:opacity-50 ${
+                guardado ? 'bg-green-600 text-white' : 'bg-emerald-500 text-white hover:bg-emerald-600'
+              }`}
+            >
+              {guardado ? <Check size={14} /> : <Save size={14} />}
+              {guardando ? 'Guardando...' : guardado ? 'Guardado' : 'Guardar paciente'}
+            </button>
             <button
               onClick={() => abrirPlantillaSemanal(logoSrc, get, patient, macros, meals)}
               title="Crear plantilla de dieta semanal"
