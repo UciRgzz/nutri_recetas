@@ -10,6 +10,7 @@ import { initGrupos } from './utils/foodGroups';
 import { activityLevels } from './utils/calculations';
 import logoSrc from './assets/logo.png';
 import { abrirPlantillaSemanal } from './utils/plantillaSemanal';
+import { AuthGate } from './components/Auth';
 
 
 const STEPS = ['Paciente', 'Calorías', 'Macros', 'Equivalentes', 'Dieta'];
@@ -33,7 +34,8 @@ export default function App() {
   const [comidas, setComidas] = useState<Meal[]>([]);
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <AuthGate>
+      {() => <div className="flex min-h-screen bg-slate-100">
       <aside className="w-14 bg-sky-500 flex flex-col items-center py-4 gap-2 flex-shrink-0">
         {sidebarItems.map((item, i) => (
   <button
@@ -141,6 +143,7 @@ export default function App() {
           )}
         </div>
       </main>
-    </div>
+      </div>}
+    </AuthGate>
   );
 }
