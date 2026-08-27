@@ -166,15 +166,25 @@ export default function CalendarPanel({ userId }: Props) {
               const isToday = date === todayIso();
               const hasAtendido = dayAppointments.some(a => a.status === 'atendido');
               const hasPendiente = dayAppointments.some(a => a.status === 'pendiente');
+              const appointmentLabel = dayAppointments.length === 1
+                ? dayAppointments[0].patient_name
+                : `${dayAppointments.length} citas`;
               return (
                 <button
                   key={i}
                   onClick={() => setSelectedDate(date)}
-                  className={`relative h-14 rounded-lg text-sm flex flex-col items-center justify-center gap-0.5 transition-colors ${
+                  className={`relative h-20 rounded-lg text-sm flex flex-col items-center justify-center gap-1 transition-colors ${
                     isSelected ? 'bg-emerald-500 text-white' : isToday ? 'bg-emerald-50 text-emerald-600 font-semibold' : 'hover:bg-gray-50 text-gray-600'
                   }`}
                 >
-                  {day}
+                  <span>{day}</span>
+                  {dayAppointments.length > 0 && (
+                    <span className={`max-w-full truncate rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      isSelected ? 'bg-white/20 text-white' : hasPendiente ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                    }`} title={appointmentLabel}>
+                      {appointmentLabel}
+                    </span>
+                  )}
                   {(hasPendiente || hasAtendido) && (
                     <span className="flex gap-0.5">
                       {hasPendiente && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-amber-400'}`} />}
@@ -201,7 +211,17 @@ export default function CalendarPanel({ userId }: Props) {
           </div>
 
           {formOpen && (
-            <div className="bg-gray-50 rounded-xl p-4 mb-3 flex flex-col gap-3">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="new-appointment-title">
+              <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+              <div className="mb-5 flex items-start justify-between">
+                <div>
+                  <h4 id="new-appointment-title" className="text-lg font-semibold text-gray-800">Nueva cita</h4>
+                  <p className="mt-1 text-xs text-gray-500">{new Date(selectedDate + 'T00:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                </div>
+                <button type="button" onClick={() => setFormOpen(false)} title="Cerrar" className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
+                  <X size={18} />
+                </button>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <label className="col-span-2 flex flex-col gap-1 text-xs text-gray-500">
                   Paciente
@@ -246,6 +266,7 @@ export default function CalendarPanel({ userId }: Props) {
                 >
                   <Check size={13} /> {saving ? 'Guardando...' : 'Agendar'}
                 </button>
+              </div>
               </div>
             </div>
           )}
