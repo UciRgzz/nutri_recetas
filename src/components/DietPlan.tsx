@@ -125,8 +125,9 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1e293b; margin: 0; padding: 20px; background: #e2e8f0; }
-  #page { max-width: 820px; margin: 0 auto; background: #ffffff; padding: 32px 36px 100px; }
+  html, body { margin: 0; padding: 0; background: #ffffff; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1e293b; }
+  #page { max-width: 820px; width: 100%; margin: 0 auto; background: #ffffff; padding: 16px 36px 40px; }
 
   /* Header */
   .doc-header { background-color: #1e3a8a; color: white; border-radius: 10px; padding: 16px 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 18px; }
@@ -383,7 +384,7 @@ function descargar() {
   btn.style.display = 'none';
   setTimeout(function() {
     var opt = {
-      margin:   [8, 8, 8, 8],
+      margin:   [0, 0, 0, 0],
       filename: '${nombreArchivo}.pdf',
       image:    { type: 'jpeg', quality: 0.98 },
       html2canvas: {
@@ -392,14 +393,14 @@ function descargar() {
         logging: false,
         backgroundColor: '#ffffff',
         onclone: function(clonedDoc) {
-          // Quitar el body gris centrado para que no se recorte
+          clonedDoc.documentElement.style.cssText = 'margin:0;padding:0;background:#ffffff;';
           clonedDoc.body.style.cssText = 'margin:0;padding:0;background:#ffffff;';
           var p = clonedDoc.getElementById('page');
           if (p) {
-            p.style.maxWidth = 'none';
+            p.style.maxWidth = '100%';
             p.style.width = '794px';
             p.style.margin = '0';
-            p.style.padding = '24px 32px 50px';
+            p.style.padding = '12px 20px 24px';
             p.style.background = '#ffffff';
           }
         }
