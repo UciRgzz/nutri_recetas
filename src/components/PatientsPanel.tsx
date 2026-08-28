@@ -183,7 +183,7 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
     planRoot.style.position = 'fixed';
     planRoot.style.left = '0';
     planRoot.style.top = '0';
-    planRoot.style.zIndex = '-1';
+    planRoot.style.zIndex = '10000';
     planRoot.style.pointerEvents = 'none';
     document.body.appendChild(planRoot);
 
