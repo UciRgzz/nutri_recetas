@@ -192,6 +192,14 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
       #patient-plan-export * {
         box-sizing: border-box !important;
       }
+      .plan-meal-block {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+      .plan-meal-block > div {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
     `;
     document.head.appendChild(pdfStyle);
 
@@ -242,7 +250,7 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
             width: 794,
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+          pagebreak: { mode: ['css', 'legacy'] },
           enableLinks: false,
         })
         .from(planRoot)
@@ -476,7 +484,7 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
                 </div>
 
                 {planMeals?.map(meal => (
-                  <div key={meal.id} className="mb-4 rounded-xl border border-gray-200 overflow-hidden">
+                  <div key={meal.id} className="plan-meal-block mb-4 rounded-xl border border-gray-200 overflow-hidden">
                     <div className="px-4 py-3 bg-amber-100 text-amber-900 font-semibold border-b border-amber-200">{meal.nombre}</div>
                     <div className="bg-gray-50/80 p-3">
                       {meal.preparaciones.length === 0 ? <div className="text-sm text-gray-500">Sin preparaciones.</div> : meal.preparaciones.map(prep => (
