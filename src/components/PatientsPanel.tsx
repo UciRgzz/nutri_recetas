@@ -192,6 +192,27 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
       #patient-plan-export * {
         box-sizing: border-box !important;
       }
+      #patient-plan-export .px-5 { padding-left: 20px !important; padding-right: 20px !important; }
+      #patient-plan-export .py-4 { padding-top: 12px !important; padding-bottom: 12px !important; }
+      #patient-plan-export .p-4 { padding: 12px !important; }
+      #patient-plan-export .p-3 { padding: 9px !important; }
+      #patient-plan-export .px-4 { padding-left: 12px !important; padding-right: 12px !important; }
+      #patient-plan-export .py-3 { padding-top: 8px !important; padding-bottom: 8px !important; }
+      #patient-plan-export .py-2 { padding-top: 5px !important; padding-bottom: 5px !important; }
+      #patient-plan-export .mb-5 { margin-bottom: 12px !important; }
+      #patient-plan-export .mb-4 { margin-bottom: 10px !important; }
+      #patient-plan-export .mb-3 { margin-bottom: 7px !important; }
+      #patient-plan-export .mt-2 { margin-top: 5px !important; }
+      #patient-plan-export .gap-4 { gap: 12px !important; }
+      #patient-plan-export .gap-3 { gap: 8px !important; }
+      #patient-plan-export .text-5xl { font-size: 2.5rem !important; line-height: 1 !important; }
+      #patient-plan-export .text-3xl { font-size: 1.55rem !important; line-height: 1.1 !important; }
+      #patient-plan-export .text-2xl { font-size: 1.35rem !important; line-height: 1.15 !important; }
+      #patient-plan-export .text-xl { font-size: 1.05rem !important; line-height: 1.2 !important; }
+      #patient-plan-export .text-sm { font-size: 0.75rem !important; line-height: 1.25 !important; }
+      #patient-plan-export .text-xs { font-size: 0.6rem !important; line-height: 1.2 !important; }
+      #patient-plan-export .w-12 { width: 38px !important; }
+      #patient-plan-export .h-12 { height: 38px !important; }
       .plan-meal-block {
         break-inside: auto;
         page-break-inside: auto;
