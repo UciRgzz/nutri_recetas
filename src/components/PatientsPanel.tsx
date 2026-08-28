@@ -172,47 +172,55 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
 
   const exportPatientPlan = async () => {
     if (!diets || diets.length === 0) return;
-    const planRoot = document.getElementById('patient-plan-export');
-    if (!planRoot) return;
+    const sourcePlan = document.getElementById('patient-plan-export');
+    if (!sourcePlan) return;
+
+    const planRoot = sourcePlan.cloneNode(true) as HTMLElement;
+    planRoot.id = 'patient-plan-pdf-copy';
+    planRoot.style.position = 'absolute';
+    planRoot.style.left = '-10000px';
+    planRoot.style.top = '0';
+    document.body.appendChild(planRoot);
 
     const pdfStyle = document.createElement('style');
     pdfStyle.textContent = `
       @page { margin: 0; size: A4 portrait; }
       html, body { margin: 0 !important; padding: 0 !important; }
-      #patient-plan-export {
-        width: 794px !important;
-        max-width: 794px !important;
-        min-width: 794px !important;
+      #patient-plan-pdf-copy {
+        width: 1103px !important;
+        max-width: 1103px !important;
+        min-width: 1103px !important;
+        zoom: 0.72 !important;
         margin: 0 !important;
         padding: 0 !important;
         box-sizing: border-box !important;
         display: block !important;
         overflow: visible !important;
       }
-      #patient-plan-export * {
+      #patient-plan-pdf-copy * {
         box-sizing: border-box !important;
       }
-      #patient-plan-export .px-5 { padding-left: 20px !important; padding-right: 20px !important; }
-      #patient-plan-export .py-4 { padding-top: 12px !important; padding-bottom: 12px !important; }
-      #patient-plan-export .p-4 { padding: 12px !important; }
-      #patient-plan-export .p-3 { padding: 9px !important; }
-      #patient-plan-export .px-4 { padding-left: 12px !important; padding-right: 12px !important; }
-      #patient-plan-export .py-3 { padding-top: 8px !important; padding-bottom: 8px !important; }
-      #patient-plan-export .py-2 { padding-top: 5px !important; padding-bottom: 5px !important; }
-      #patient-plan-export .mb-5 { margin-bottom: 12px !important; }
-      #patient-plan-export .mb-4 { margin-bottom: 10px !important; }
-      #patient-plan-export .mb-3 { margin-bottom: 7px !important; }
-      #patient-plan-export .mt-2 { margin-top: 5px !important; }
-      #patient-plan-export .gap-4 { gap: 12px !important; }
-      #patient-plan-export .gap-3 { gap: 8px !important; }
-      #patient-plan-export .text-5xl { font-size: 2.5rem !important; line-height: 1 !important; }
-      #patient-plan-export .text-3xl { font-size: 1.55rem !important; line-height: 1.1 !important; }
-      #patient-plan-export .text-2xl { font-size: 1.35rem !important; line-height: 1.15 !important; }
-      #patient-plan-export .text-xl { font-size: 1.05rem !important; line-height: 1.2 !important; }
-      #patient-plan-export .text-sm { font-size: 0.75rem !important; line-height: 1.25 !important; }
-      #patient-plan-export .text-xs { font-size: 0.6rem !important; line-height: 1.2 !important; }
-      #patient-plan-export .w-12 { width: 38px !important; }
-      #patient-plan-export .h-12 { height: 38px !important; }
+      #patient-plan-pdf-copy .px-5 { padding-left: 20px !important; padding-right: 20px !important; }
+      #patient-plan-pdf-copy .py-4 { padding-top: 12px !important; padding-bottom: 12px !important; }
+      #patient-plan-pdf-copy .p-4 { padding: 12px !important; }
+      #patient-plan-pdf-copy .p-3 { padding: 9px !important; }
+      #patient-plan-pdf-copy .px-4 { padding-left: 12px !important; padding-right: 12px !important; }
+      #patient-plan-pdf-copy .py-3 { padding-top: 8px !important; padding-bottom: 8px !important; }
+      #patient-plan-pdf-copy .py-2 { padding-top: 5px !important; padding-bottom: 5px !important; }
+      #patient-plan-pdf-copy .mb-5 { margin-bottom: 12px !important; }
+      #patient-plan-pdf-copy .mb-4 { margin-bottom: 10px !important; }
+      #patient-plan-pdf-copy .mb-3 { margin-bottom: 7px !important; }
+      #patient-plan-pdf-copy .mt-2 { margin-top: 5px !important; }
+      #patient-plan-pdf-copy .gap-4 { gap: 12px !important; }
+      #patient-plan-pdf-copy .gap-3 { gap: 8px !important; }
+      #patient-plan-pdf-copy .text-5xl { font-size: 2.5rem !important; line-height: 1 !important; }
+      #patient-plan-pdf-copy .text-3xl { font-size: 1.55rem !important; line-height: 1.1 !important; }
+      #patient-plan-pdf-copy .text-2xl { font-size: 1.35rem !important; line-height: 1.15 !important; }
+      #patient-plan-pdf-copy .text-xl { font-size: 1.05rem !important; line-height: 1.2 !important; }
+      #patient-plan-pdf-copy .text-sm { font-size: 0.75rem !important; line-height: 1.25 !important; }
+      #patient-plan-pdf-copy .text-xs { font-size: 0.6rem !important; line-height: 1.2 !important; }
+      #patient-plan-pdf-copy .w-12 { width: 38px !important; }
+      #patient-plan-pdf-copy .h-12 { height: 38px !important; }
       .plan-meal-block {
         break-inside: auto;
         page-break-inside: auto;
@@ -230,9 +238,9 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
     const originalMargin = planRoot.style.margin;
     const originalPadding = planRoot.style.padding;
 
-    planRoot.style.width = '794px';
-    planRoot.style.maxWidth = '794px';
-    planRoot.style.minWidth = '794px';
+    planRoot.style.width = '1103px';
+    planRoot.style.maxWidth = '1103px';
+    planRoot.style.minWidth = '1103px';
     planRoot.style.margin = '0';
     planRoot.style.padding = '0';
 
@@ -243,6 +251,7 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
       const restorePlan = () => {
         pdfStyle.remove();
         script.remove();
+        planRoot.remove();
         planRoot.style.width = originalWidth;
         planRoot.style.maxWidth = originalMaxWidth;
         planRoot.style.minWidth = originalMinWidth;
@@ -267,8 +276,8 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
             backgroundColor: '#ffffff',
             scrollX: 0,
             scrollY: 0,
-            windowWidth: document.body.scrollWidth,
-            width: 794,
+            windowWidth: 1103,
+            width: 1103,
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['css', 'legacy'] },
@@ -281,6 +290,7 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
     script.onerror = () => {
       pdfStyle.remove();
       script.remove();
+      planRoot.remove();
       planRoot.style.width = originalWidth;
       planRoot.style.maxWidth = originalMaxWidth;
       planRoot.style.minWidth = originalMinWidth;
