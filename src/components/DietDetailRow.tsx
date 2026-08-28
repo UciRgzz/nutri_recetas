@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { fetchDietMeals, METODO_LABEL, type SavedDiet } from '../lib/patients';
@@ -7,10 +7,11 @@ import type { Meal } from '../types';
 interface Props {
   diet: SavedDiet;
   headerExtra?: ReactNode;
+  defaultOpen?: boolean;
 }
 
-export default function DietDetailRow({ diet, headerExtra }: Props) {
-  const [open, setOpen] = useState(false);
+export default function DietDetailRow({ diet, headerExtra, defaultOpen = false }: Props) {
+  const [open, setOpen] = useState(defaultOpen);
   const [meals, setMeals] = useState<Meal[] | null>(null);
   const [loadingMeals, setLoadingMeals] = useState(false);
 
@@ -21,6 +22,13 @@ export default function DietDetailRow({ diet, headerExtra }: Props) {
       fetchDietMeals(diet.id).then(setMeals).finally(() => setLoadingMeals(false));
     }
   };
+
+  useEffect(() => {
+    if (defaultOpen && meals === null) {
+      setLoadingMeals(true);
+      fetchDietMeals(diet.id).then(setMeals).finally(() => setLoadingMeals(false));
+    }
+  }, [defaultOpen, diet.id, meals]);
 
   const grHC   = Math.round((diet.calories * diet.carbs_pct / 100) / 4);
   const grProt = Math.round((diet.calories * diet.protein_pct / 100) / 4);

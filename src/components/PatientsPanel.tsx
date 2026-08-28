@@ -107,6 +107,7 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
   onUpdated: (updated: SavedPatient) => void;
 }) {
   const [diets, setDiets] = useState<SavedDiet[] | null>(null);
+  const [autoOpenDietId, setAutoOpenDietId] = useState<string | null>(null);
   const loadingDiets = expanded && diets === null;
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Patient>(() => toPatient(patient));
@@ -117,10 +118,19 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
     if (!expanded || diets !== null) return;
     let cancelled = false;
     fetchDietsForPatient(patient.id).then(result => {
-      if (!cancelled) setDiets(result);
+      if (!cancelled) {
+        setDiets(result);
+        if (result.length > 0) setAutoOpenDietId(result[0].id);
+      }
     });
     return () => { cancelled = true; };
   }, [expanded, diets, patient.id]);
+
+  useEffect(() => {
+    if (expanded && diets && diets.length > 0 && !autoOpenDietId) {
+      setAutoOpenDietId(diets[0].id);
+    }
+  }, [expanded, diets, autoOpenDietId]);
 
   const startEdit = () => {
     setForm(toPatient(patient));
@@ -266,7 +276,13 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
 
           {loadingDiets && <span className="text-xs text-gray-400 flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> Cargando dietas...</span>}
           {diets && diets.length === 0 && <span className="text-xs text-gray-400">Sin dietas guardadas para este paciente.</span>}
-          {diets?.map(diet => <DietDetailRow key={diet.id} diet={diet} />)}
+          {diets?.map(diet => (
+            <DietDetailRow
+              key={diet.id}
+              diet={diet}
+              defaultOpen={autoOpenDietId === diet.id}
+            />
+          ))}
         </div>
       )}
     </div>
