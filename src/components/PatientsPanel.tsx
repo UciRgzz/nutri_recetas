@@ -88,6 +88,7 @@ export default function PatientsPanel() {
                 patient={patient}
                 expanded={expandedPatient === patient.id}
                 onToggle={() => setExpandedPatient(expandedPatient === patient.id ? null : patient.id)}
+                onOpenPlan={() => setExpandedPatient(patient.id)}
                 onUpdated={handleUpdated}
               />
             ))}
@@ -98,10 +99,11 @@ export default function PatientsPanel() {
   );
 }
 
-function PatientRow({ patient, expanded, onToggle, onUpdated }: {
+function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
   patient: SavedPatient;
   expanded: boolean;
   onToggle: () => void;
+  onOpenPlan: () => void;
   onUpdated: (updated: SavedPatient) => void;
 }) {
   const [diets, setDiets] = useState<SavedDiet[] | null>(null);
@@ -234,7 +236,7 @@ function PatientRow({ patient, expanded, onToggle, onUpdated }: {
           <Pencil size={14} />
         </button>
         <button
-          onClick={onToggle}
+          onClick={onOpenPlan}
           title="Ver plan nutricional"
           className="text-gray-400 hover:text-emerald-600 p-1"
         >
