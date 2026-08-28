@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, Loader2, Users, Pencil, Check, X, Search, CalendarDays } from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2, Users, Pencil, Check, X, Search, CalendarDays, FileText } from 'lucide-react';
 import { fetchPatients, fetchDietsForPatient, fetchDietMeals, updatePatient, type SavedPatient, type SavedDiet } from '../lib/patients';
 import { calcularIMC, clasificarIMC } from '../utils/calculations';
 import { abrirPlantillaSemanal } from '../utils/plantillaSemanal';
@@ -232,6 +232,13 @@ function PatientRow({ patient, expanded, onToggle, onUpdated }: {
         </button>
         <button onClick={startEdit} title="Editar paciente" className="text-gray-400 hover:text-emerald-600 p-1">
           <Pencil size={14} />
+        </button>
+        <button
+          onClick={onToggle}
+          title="Ver plan nutricional"
+          className="text-gray-400 hover:text-emerald-600 p-1"
+        >
+          <FileText size={14} />
         </button>
         {diets && diets.length > 0 && (
           <button
