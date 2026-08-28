@@ -25,9 +25,20 @@ export default function DietDetailRow({ diet, headerExtra, defaultOpen = false }
 
   useEffect(() => {
     if (defaultOpen && meals === null) {
-      setLoadingMeals(true);
-      fetchDietMeals(diet.id).then(setMeals).finally(() => setLoadingMeals(false));
+      let cancelled = false;
+      const loadMeals = async () => {
+        setLoadingMeals(true);
+        try {
+          const fetchedMeals = await fetchDietMeals(diet.id);
+          if (!cancelled) setMeals(fetchedMeals);
+        } finally {
+          if (!cancelled) setLoadingMeals(false);
+        }
+      };
+      void loadMeals();
+      return () => { cancelled = true; };
     }
+    return undefined;
   }, [defaultOpen, diet.id, meals]);
 
   const grHC   = Math.round((diet.calories * diet.carbs_pct / 100) / 4);

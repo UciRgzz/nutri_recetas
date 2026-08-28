@@ -12,6 +12,45 @@ interface Props {
 
 const COLORS = { hdec: '#4ade80', prot: '#fb923c', lip: '#60a5fa' };
 
+function MacroRow({
+  label, color, gr, cal, pct, grKg, macroKey, onChange,
+}: {
+  label: string; color: string; gr: number; cal: number; pct: number; grKg: number;
+  macroKey: keyof MacroType; onChange: (key: keyof MacroType, value: number) => void;
+}) {
+  return (
+    <tr className="border-b border-gray-100">
+      <td className="py-3 pr-4">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
+          <span className="font-medium text-gray-700">{label}</span>
+        </div>
+      </td>
+      <td className="py-3 text-center text-gray-700">{gr} g</td>
+      <td className="py-3 text-center text-gray-700">{cal} cal</td>
+      <td className="py-3 px-4">
+        <div className="flex items-center gap-3">
+          <input
+            type="range"
+            min={0} max={100} value={pct}
+            onChange={e => onChange(macroKey, parseInt(e.target.value))}
+            className="flex-1 h-1 accent-red-400"
+            style={{ accentColor: '#ef4444' }}
+          />
+          <input
+            type="number"
+            value={pct}
+            min={0} max={100}
+            onChange={e => onChange(macroKey, parseInt(e.target.value) || 0)}
+            className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          />
+        </div>
+      </td>
+      <td className="py-3 text-center text-gray-500 text-sm">{grKg.toFixed(1)} g</td>
+    </tr>
+  );
+}
+
 export default function MacroDistributionStep({ get, pesoActual, macros, onChange, onNext, onBack }: Props) {
   const totalPct = macros.hdec + macros.prot + macros.lip;
 
@@ -36,42 +75,6 @@ export default function MacroDistributionStep({ get, pesoActual, macros, onChang
     const clamped = Math.max(0, Math.min(100, val));
     onChange({ ...macros, [key]: clamped });
   };
-
-  const Row = ({
-    label, color, gr, cal, pct, grKg, macroKey,
-  }: {
-    label: string; color: string; gr: number; cal: number; pct: number; grKg: number; macroKey: keyof MacroType;
-  }) => (
-    <tr className="border-b border-gray-100">
-      <td className="py-3 pr-4">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
-          <span className="font-medium text-gray-700">{label}</span>
-        </div>
-      </td>
-      <td className="py-3 text-center text-gray-700">{gr} g</td>
-      <td className="py-3 text-center text-gray-700">{cal} cal</td>
-      <td className="py-3 px-4">
-        <div className="flex items-center gap-3">
-          <input
-            type="range"
-            min={0} max={100} value={pct}
-            onChange={e => setMacro(macroKey, parseInt(e.target.value))}
-            className="flex-1 h-1 accent-red-400"
-            style={{ accentColor: '#ef4444' }}
-          />
-          <input
-            type="number"
-            value={pct}
-            min={0} max={100}
-            onChange={e => setMacro(macroKey, parseInt(e.target.value) || 0)}
-            className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-300"
-          />
-        </div>
-      </td>
-      <td className="py-3 text-center text-gray-500 text-sm">{grKg.toFixed(1)} g</td>
-    </tr>
-  );
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -112,9 +115,9 @@ export default function MacroDistributionStep({ get, pesoActual, macros, onChang
                 </tr>
               </thead>
               <tbody>
-                <Row label="Hdec" color={COLORS.hdec} gr={grHdec} cal={calHdec} pct={macros.hdec} grKg={pesoActual > 0 ? grHdec / pesoActual : 0} macroKey="hdec" />
-                <Row label="Prot" color={COLORS.prot} gr={grProt} cal={calProt} pct={macros.prot} grKg={pesoActual > 0 ? grProt / pesoActual : 0} macroKey="prot" />
-                <Row label="Lip"  color={COLORS.lip}  gr={grLip}  cal={calLip}  pct={macros.lip}  grKg={pesoActual > 0 ? grLip  / pesoActual : 0} macroKey="lip"  />
+                <MacroRow label="Hdec" color={COLORS.hdec} gr={grHdec} cal={calHdec} pct={macros.hdec} grKg={pesoActual > 0 ? grHdec / pesoActual : 0} macroKey="hdec" onChange={setMacro} />
+                <MacroRow label="Prot" color={COLORS.prot} gr={grProt} cal={calProt} pct={macros.prot} grKg={pesoActual > 0 ? grProt / pesoActual : 0} macroKey="prot" onChange={setMacro} />
+                <MacroRow label="Lip"  color={COLORS.lip}  gr={grLip}  cal={calLip}  pct={macros.lip}  grKg={pesoActual > 0 ? grLip  / pesoActual : 0} macroKey="lip"  onChange={setMacro} />
                 <tr className="border-t border-gray-200">
                   <td colSpan={2} className="py-3 text-gray-500">Total</td>
                   <td className="py-3 text-center font-bold text-emerald-500">{calTotal} cal</td>

@@ -26,7 +26,7 @@ export function calcularGET(
   caloriasKilo?: number
 ): number {
   const { edad, sexo, pesoActual, talla } = patient;
-  let tmb = 0;
+  let tmb: number;
 
   switch (metodo) {
     case 'harris-benedict':

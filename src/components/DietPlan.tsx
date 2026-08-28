@@ -122,7 +122,7 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
 <head>
 <meta charset="UTF-8"/>
 <title>Plan Nutricional – ${patient.nombre}</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #ffffff; }
@@ -411,7 +411,7 @@ function descargar() {
       .then(function() { btn.style.display = 'flex'; });
   }, 300);
 }
-<\/script>
+</script>
 </body></html>`;
 
     const win = window.open('', '_blank');

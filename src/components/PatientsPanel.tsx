@@ -7,6 +7,14 @@ import type { Patient, Meal } from '../types';
 import logoSrc from '../assets/logo.png';
 import DietDetailRow from './DietDetailRow';
 
+type Html2Pdf = () => {
+  set: (options: Record<string, unknown>) => {
+    from: (element: HTMLElement) => { save: () => Promise<void> };
+  };
+};
+
+type WindowWithHtml2Pdf = Window & { html2pdf?: Html2Pdf };
+
 function toPatient(p: SavedPatient): Patient {
   return {
     nombre: p.name,
@@ -128,12 +136,6 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
   }, [expanded, diets, patient.id]);
 
   useEffect(() => {
-    if (expanded && diets && diets.length > 0 && !autoOpenDietId) {
-      setAutoOpenDietId(diets[0].id);
-    }
-  }, [expanded, diets, autoOpenDietId]);
-
-  useEffect(() => {
     if (!expanded || !diets || diets.length === 0) return;
     const latest = diets[0];
     let cancelled = false;
@@ -175,12 +177,14 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
     const sourcePlan = document.getElementById('patient-plan-export');
     if (!sourcePlan) return;
 
-    // Clon fuera de pantalla: evita que el scroll/overflow de la lista de pacientes recorte la captura
+    // El clon debe permanecer dentro del viewport para que html2canvas pueda rasterizarlo.
     const planRoot = sourcePlan.cloneNode(true) as HTMLElement;
     planRoot.id = 'patient-plan-pdf-copy';
-    planRoot.style.position = 'absolute';
-    planRoot.style.left = '-10000px';
+    planRoot.style.position = 'fixed';
+    planRoot.style.left = '0';
     planRoot.style.top = '0';
+    planRoot.style.zIndex = '-1';
+    planRoot.style.pointerEvents = 'none';
     document.body.appendChild(planRoot);
 
     const pdfStyle = document.createElement('style');
@@ -238,7 +242,7 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
     };
 
     const runExport = () => {
-      const html2pdf = (window as any).html2pdf;
+      const html2pdf = (window as WindowWithHtml2Pdf).html2pdf;
       if (!html2pdf) {
         cleanup();
         setSaveError('No se pudo cargar el generador de PDF. Verifica tu conexión e inténtalo de nuevo.');
@@ -270,14 +274,14 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
         });
     };
 
-    if ((window as any).html2pdf) {
-      runExport();
+    if ((window as WindowWithHtml2Pdf).html2pdf) {
+      requestAnimationFrame(runExport);
       return;
     }
 
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    script.onload = runExport;
+    script.onload = () => requestAnimationFrame(runExport);
     script.onerror = () => {
       cleanup();
       setSaveError('No se pudo cargar el generador de PDF. Verifica tu conexión e inténtalo de nuevo.');
