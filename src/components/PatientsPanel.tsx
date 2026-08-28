@@ -177,10 +177,10 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
     const sourcePlan = document.getElementById('patient-plan-export');
     if (!sourcePlan) return;
 
-    // El clon debe permanecer dentro del viewport para que html2canvas pueda rasterizarlo.
+    // Renderiza una copia normal y medible para que html2canvas capture todo el plan.
     const planRoot = sourcePlan.cloneNode(true) as HTMLElement;
     planRoot.id = 'patient-plan-pdf-copy';
-    planRoot.style.position = 'fixed';
+    planRoot.style.position = 'absolute';
     planRoot.style.left = '0';
     planRoot.style.top = '0';
     planRoot.style.zIndex = '10000';
@@ -235,6 +235,7 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
       }
     `;
     document.head.appendChild(pdfStyle);
+    planRoot.style.height = `${planRoot.scrollHeight}px`;
 
     const cleanup = () => {
       pdfStyle.remove();
@@ -260,7 +261,10 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
             logging: false,
             backgroundColor: '#ffffff',
             windowWidth: 794,
+            windowHeight: Math.max(window.innerHeight, planRoot.scrollHeight),
             width: 794,
+            scrollX: 0,
+            scrollY: 0,
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['css', 'legacy'] },
