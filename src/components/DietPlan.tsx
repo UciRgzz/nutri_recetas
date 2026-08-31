@@ -115,7 +115,6 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
     };
 
     const nombreArchivo = `plan-nutricional-${patient.nombre.replace(/\s+/g, '-').toLowerCase()}`;
-    const pdfFileName = `${nombreArchivo}-${Date.now()}.pdf`;
     const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const html = `<!DOCTYPE html>
@@ -129,11 +128,17 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
   html, body { margin: 0; padding: 0; background: #ffffff; }
   body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1e293b; }
   #page { max-width: 820px; width: 100%; margin: 0 auto; background: #ffffff; padding: 16px 36px 40px; }
+
+  /* Header */
   .doc-header { background-color: #1e3a8a; color: white; border-radius: 10px; padding: 16px 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 18px; }
   .doc-header img { width: 90px; height: 90px; object-fit: contain; background: white; border-radius: 50%; padding: 4px; flex-shrink: 0; }
   .doc-header h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
   .doc-header .sub { font-size: 11px; opacity: 0.8; }
+
+  /* Section titles */
   .section-title { font-size: 13px; font-weight: 700; color: #1e40af; border-left: 4px solid #3b82f6; padding: 4px 0 4px 10px; margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Info grid */
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
   .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px; }
   .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; }
@@ -144,21 +149,28 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
   .info-card.amber { border-left: 3px solid #f59e0b; }
   .info-card.red   { border-left: 3px solid #ef4444; }
   .info-card.purple{ border-left: 3px solid #a855f7; }
+
+  /* Macros bar */
   .macros-row { display: flex; gap: 8px; margin-bottom: 16px; }
   .macro-pill { flex: 1; border-radius: 8px; padding: 8px 12px; text-align: center; }
   .macro-pill .mp { font-size: 18px; font-weight: 800; }
   .macro-pill .ml { font-size: 9px; opacity: 0.8; margin-top: 1px; }
+
+  /* Equivalents table */
   .eq-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
   .eq-table thead tr { background: #1e40af; color: white; }
   .eq-table thead th { padding: 7px 8px; font-size: 10px; font-weight: 600; text-align: center; }
   .eq-table thead th:first-child { text-align: left; }
   .eq-table tbody tr:nth-child(even) { background: #f8fafc; }
+  .eq-table tbody tr:hover { background: #eff6ff; }
   .eq-table tbody td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
   .eq-table tbody td:not(:first-child) { text-align: center; color: #374151; }
   .eq-table tfoot .tot td { font-weight: 700; background: #dbeafe; padding: 6px 8px; border-top: 2px solid #93c5fd; }
   .eq-table tfoot .tot td:not(:first-child) { text-align: center; color: #1e3a8a; }
   .eq-table tfoot .meta td { font-size: 9px; color: #94a3b8; padding: 3px 8px; background: #f8fafc; }
   .eq-table tfoot .meta td:not(:first-child) { text-align: center; }
+
+  /* Meal blocks */
   .meal-block { border-radius: 10px; overflow: hidden; margin-bottom: 14px; border: 1px solid #e2e8f0; page-break-inside: avoid; }
   .meal-header { padding: 8px 14px; font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 6px; }
   .meal-body { padding: 10px 14px; background: white; }
@@ -172,31 +184,56 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
   .ing-table tbody tr:nth-child(even) { background: #f8fafc; }
   .ing-table tbody td { padding: 3px 8px; border-bottom: 1px solid #f1f5f9; font-size: 10px; }
   .ing-table tbody td:not(:first-child) { text-align: center; color: #475569; }
+
+  /* Editable hint */
   [contenteditable="true"] { outline: none; border-radius: 2px; cursor: text; }
+  [contenteditable="true"]:hover { background: rgba(250,204,21,0.2); outline: 1px dashed #ca8a04; }
+  [contenteditable="true"]:focus { background: rgba(250,204,21,0.25); outline: 2px solid #ca8a04; }
   .edit-hint { font-size: 9px; color: #94a3b8; text-align: right; margin-bottom: 6px; }
-  #btn-download { position: fixed; bottom: 24px; right: 24px; background: #16a34a; color: white; border: none; border-radius: 10px; padding: 13px 26px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.25); display: flex; align-items: center; gap: 8px; z-index: 999; }
-  @media print { body { background: white; } #btn-download { display: none !important; } #page { padding: 16px; box-shadow: none; } }
+
+  /* Download button */
+  #btn-download {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #16a34a; color: white;
+    border: none; border-radius: 10px;
+    padding: 13px 26px; font-size: 14px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    display: flex; align-items: center; gap: 8px;
+    transition: background 0.2s;
+    z-index: 999;
+  }
+  #btn-download:hover { background: #15803d; }
+
+  @media print {
+    body { background: white; }
+    #btn-download { display: none !important; }
+    #page { padding: 16px; box-shadow: none; }
+  }
 </style>
 </head>
 <body>
 <div id="page">
+
+  <!-- Header -->
   <div class="doc-header">
-    <img src="${logoDataUrl}" alt="Lic. Nutrición" />
+    <img src="${logoDataUrl}" alt="Lic Nutrición" />
     <div>
       <h1>Plan Nutricional</h1>
-      <div class="sub">${fecha} · Elaborado con Sistema Nutricional</div>
+      <div class="sub">${fecha} &nbsp;·&nbsp; Elaborado con Sistema Nutricional</div>
     </div>
   </div>
 
+  <!-- Datos del paciente -->
   <div class="section-title">Datos del Paciente</div>
+  <p class="edit-hint">💡 Haz clic en cualquier valor en <span style="background:rgba(250,204,21,0.3);padding:0 4px;border-radius:2px">amarillo</span> para editarlo antes de descargar</p>
   <div class="grid3">
     <div class="info-card blue">
       <div class="lbl">Nombre</div>
-      <div class="val">${patient.nombre}</div>
+      <div class="val" contenteditable="true">${patient.nombre}</div>
     </div>
     <div class="info-card">
       <div class="lbl">Edad</div>
-      <div class="val">${patient.edad} años</div>
+      <div class="val" contenteditable="true">${patient.edad} años</div>
     </div>
     <div class="info-card">
       <div class="lbl">Sexo</div>
@@ -204,11 +241,11 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
     </div>
     <div class="info-card amber">
       <div class="lbl">Peso actual</div>
-      <div class="val">${patient.pesoActual} kg</div>
+      <div class="val" contenteditable="true">${patient.pesoActual} kg</div>
     </div>
     <div class="info-card green">
       <div class="lbl">Peso ideal (Lorentz)</div>
-      <div class="val">${patient.pesoIdeal} kg</div>
+      <div class="val" contenteditable="true">${patient.pesoIdeal} kg</div>
     </div>
     <div class="info-card">
       <div class="lbl">Talla</div>
@@ -218,7 +255,7 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
   <div class="grid2" style="margin-top:8px">
     <div class="info-card ${imc < 18.5 ? 'amber' : imc < 25 ? 'green' : imc < 30 ? 'amber' : 'red'}">
       <div class="lbl">IMC</div>
-      <div class="val">${imc.toFixed(1)} – ${clasificarIMC(imc)}</div>
+      <div class="val">${imc.toFixed(1)} &nbsp;<span style="font-size:11px;font-weight:400">– ${clasificarIMC(imc)}</span></div>
     </div>
     <div class="info-card purple">
       <div class="lbl">Método de cálculo</div>
@@ -226,6 +263,7 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
     </div>
   </div>
 
+  <!-- GET y macros -->
   <div class="section-title">Requerimiento Energético</div>
   <div class="info-card blue" style="margin-bottom:10px">
     <div class="lbl">GET – Gasto Energético Total</div>
@@ -249,6 +287,7 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
     </div>
   </div>
 
+  <!-- Equivalentes -->
   <div class="section-title">Equivalentes por Grupo Alimentario</div>
   <table class="eq-table">
     <thead>
@@ -290,113 +329,96 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
     </tfoot>
   </table>
 
+  <!-- Plan de dieta -->
   <div class="section-title" style="margin-top:24px">Plan de Dieta</div>
   ${meals.map(meal => {
     const c = mealColors[meal.nombre] || { bg: '#f1f5f9', accent: '#64748b', light: '#f8fafc', text: '#334155' };
     return `
-    <div class="meal-block">
-      <div class="meal-header" style="background:${c.bg};color:${c.text};border-bottom:2px solid ${c.accent}">
-        <span style="width:10px;height:10px;border-radius:50%;background:${c.accent};display:inline-block"></span>
-        ${meal.nombre}
-      </div>
-      <div class="meal-body" style="background:${c.light}">
-        ${meal.preparaciones.length === 0
-          ? '<p style="color:#94a3b8;font-size:10px;margin:0">Sin preparaciones asignadas</p>'
-          : meal.preparaciones.map(prep => `
-          <div class="prep-block">
-            <div class="prep-name" style="border-left:3px solid ${c.accent}">${prep.nombre}</div>
-            <table class="ing-table">
-              <thead><tr><th>Alimento</th><th>Gramos</th><th>Equiv.</th><th>Unidad</th></tr></thead>
-              <tbody>
-                ${prep.ingredientes.map(ing => `
-                <tr>
-                  <td>${ing.nombre}</td>
-                  <td>${ing.gramos}</td>
-                  <td>${ing.equivalente}</td>
-                  <td>${ing.unidad}</td>
-                </tr>`).join('')}
-              </tbody>
-            </table>
-          </div>`).join('')}
-      </div>
-    </div>`;
+  <div class="meal-block">
+    <div class="meal-header" style="background:${c.bg};color:${c.text};border-bottom:2px solid ${c.accent}">
+      <span style="width:10px;height:10px;border-radius:50%;background:${c.accent};display:inline-block"></span>
+      ${meal.nombre}
+    </div>
+    <div class="meal-body" style="background:${c.light}">
+      ${meal.preparaciones.length === 0
+        ? '<p style="color:#94a3b8;font-size:10px;margin:0">Sin preparaciones asignadas</p>'
+        : meal.preparaciones.map(prep => `
+      <div class="prep-block">
+        <div class="prep-name" contenteditable="true" style="border-left:3px solid ${c.accent}">${prep.nombre}</div>
+        <table class="ing-table">
+          <thead><tr>
+            <th>Alimento</th><th>Gramos</th><th>Equiv.</th><th>Unidad</th>
+          </tr></thead>
+          <tbody>
+            ${prep.ingredientes.map(ing => `
+            <tr>
+              <td contenteditable="true">${ing.nombre}</td>
+              <td contenteditable="true">${ing.gramos}</td>
+              <td>${ing.equivalente}</td>
+              <td contenteditable="true">${ing.unidad}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`).join('')}
+    </div>
+  </div>`;
   }).join('')}
-</div>
-<button id="btn-download" onclick="descargar()">⬇ Descargar PDF</button>
+
+  <!-- Observaciones -->
+  <div class="section-title" style="margin-top:20px">Observaciones</div>
+  <div contenteditable="true" style="
+    min-height:60px; border:1px dashed #cbd5e1; border-radius:8px;
+    padding:10px 14px; font-size:11px; color:#64748b; line-height:1.6;
+  ">Escribe aquí cualquier indicación adicional para el paciente...</div>
+
+</div><!-- /#page -->
+
+<!-- Botón descarga fijo -->
+<button id="btn-download" onclick="descargar()">
+  ⬇ Descargar PDF
+</button>
+
 <script>
 function descargar() {
   var btn = document.getElementById('btn-download');
   btn.style.display = 'none';
   setTimeout(function() {
     var opt = {
-      margin: [0, 0, 0, 0],
+      margin:   [0, 0, 0, 0],
       filename: '${nombreArchivo}.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', onclone: function(clonedDoc) { clonedDoc.documentElement.style.cssText = 'margin:0;padding:0;background:#ffffff;'; clonedDoc.body.style.cssText = 'margin:0;padding:0;background:#ffffff;'; var p = clonedDoc.getElementById('page'); if (p) { p.style.maxWidth = '100%'; p.style.width = '794px'; p.style.margin = '0'; p.style.padding = '12px 20px 24px'; p.style.background = '#ffffff'; } } },
+      image:    { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        onclone: function(clonedDoc) {
+          clonedDoc.documentElement.style.cssText = 'margin:0;padding:0;background:#ffffff;';
+          clonedDoc.body.style.cssText = 'margin:0;padding:0;background:#ffffff;';
+          var p = clonedDoc.getElementById('page');
+          if (p) {
+            p.style.maxWidth = '100%';
+            p.style.width = '794px';
+            p.style.margin = '0';
+            p.style.padding = '12px 20px 24px';
+            p.style.background = '#ffffff';
+          }
+        }
+      },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    html2pdf().set(opt).from(document.getElementById('page')).save().then(function() { btn.style.display = 'flex'; });
+    html2pdf().set(opt).from(document.getElementById('page')).save()
+      .then(function() { btn.style.display = 'flex'; });
   }, 300);
 }
 </script>
 </body></html>`;
 
-    const loadHtml2Pdf = (target: Window) => new Promise<void>((resolve, reject) => {
-      if ((target as Window & { html2pdf?: unknown }).html2pdf) {
-        resolve();
-        return;
-      }
-
-      const script = target.document.createElement('script');
-      script.src = `https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js?v=${Date.now()}`;
-      script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('No se pudo cargar la librería de PDF.'));
-      target.document.head.appendChild(script);
-    });
-
-    const win = window.open('', '_blank', 'noopener,noreferrer');
+    const win = window.open('', '_blank');
     if (!win) return;
-
     win.document.write(html);
     win.document.close();
     win.focus();
-
-    try {
-      await loadHtml2Pdf(win);
-      const page = win.document.getElementById('page');
-      const html2pdf = (win as Window & { html2pdf?: any }).html2pdf;
-      if (!page || !html2pdf) {
-        return;
-      }
-
-      html2pdf().set({
-        margin: [0, 0, 0, 0],
-        filename: pdfFileName,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-          onclone: (clonedDoc: Document) => {
-            clonedDoc.documentElement.style.cssText = 'margin:0;padding:0;background:#ffffff;';
-            clonedDoc.body.style.cssText = 'margin:0;padding:0;background:#ffffff;';
-            const clonedPage = clonedDoc.getElementById('page');
-            if (clonedPage) {
-              clonedPage.style.maxWidth = '100%';
-              clonedPage.style.width = '794px';
-              clonedPage.style.margin = '0';
-              clonedPage.style.padding = '12px 20px 24px';
-              clonedPage.style.background = '#ffffff';
-            }
-          },
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      }).from(page).save();
-    } catch (error) {
-      console.error('Error al exportar PDF:', error);
-    }
   };
 
   const addPrep = () => {
@@ -478,7 +500,7 @@ function descargar() {
   const mealNames = ['Al despertar', 'Desayuno', 'Medio día', 'Comida', 'Media tarde', 'Cena'];
 
   return (
-    <div id="diet-plan-export" className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100">
