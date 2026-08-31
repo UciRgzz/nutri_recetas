@@ -115,6 +115,7 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
     };
 
     const nombreArchivo = `plan-nutricional-${patient.nombre.replace(/\s+/g, '-').toLowerCase()}`;
+    const pdfFileName = `${nombreArchivo}-${Date.now()}.pdf`;
     const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const html = `<!DOCTYPE html>
@@ -340,11 +341,62 @@ function descargar() {
 </script>
 </body></html>`;
 
-    const win = window.open('', '_blank');
+    const loadHtml2Pdf = (target: Window) => new Promise<void>((resolve, reject) => {
+      if ((target as Window & { html2pdf?: unknown }).html2pdf) {
+        resolve();
+        return;
+      }
+
+      const script = target.document.createElement('script');
+      script.src = `https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js?v=${Date.now()}`;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('No se pudo cargar la librería de PDF.'));
+      target.document.head.appendChild(script);
+    });
+
+    const win = window.open('', '_blank', 'noopener,noreferrer');
     if (!win) return;
+
     win.document.write(html);
     win.document.close();
     win.focus();
+
+    try {
+      await loadHtml2Pdf(win);
+      const page = win.document.getElementById('page');
+      const html2pdf = (win as Window & { html2pdf?: any }).html2pdf;
+      if (!page || !html2pdf) {
+        return;
+      }
+
+      html2pdf().set({
+        margin: [0, 0, 0, 0],
+        filename: pdfFileName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          onclone: (clonedDoc: Document) => {
+            clonedDoc.documentElement.style.cssText = 'margin:0;padding:0;background:#ffffff;';
+            clonedDoc.body.style.cssText = 'margin:0;padding:0;background:#ffffff;';
+            const clonedPage = clonedDoc.getElementById('page');
+            if (clonedPage) {
+              clonedPage.style.maxWidth = '100%';
+              clonedPage.style.width = '794px';
+              clonedPage.style.margin = '0';
+              clonedPage.style.padding = '12px 20px 24px';
+              clonedPage.style.background = '#ffffff';
+            }
+          },
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      }).from(page).save();
+    } catch (error) {
+      console.error('Error al exportar PDF:', error);
+    }
   };
 
   const addPrep = () => {
