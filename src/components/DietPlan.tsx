@@ -6,20 +6,9 @@ import {
 } from 'lucide-react';
 import { AlarmClockOff } from 'lucide-react';
 import { generateDiet, calcEquivTable } from '../utils/dietGenerator';
-import { calcularIMC, clasificarIMC } from '../utils/calculations';
 import { abrirPlantillaSemanal } from '../utils/plantillaSemanal';
 import { savePatientDiet } from '../lib/patients';
 import logoSrc from '../assets/logo.png';
-
-async function imgToDataUrl(src: string): Promise<string> {
-  const res = await fetch(src);
-  const blob = await res.blob();
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.readAsDataURL(blob);
-  });
-}
 
 const MEAL_ICONS: Record<string, React.ReactNode> = {
   'Al despertar': <AlarmClockOff size={16} />,
@@ -31,15 +20,6 @@ const MEAL_ICONS: Record<string, React.ReactNode> = {
 };
 
 function uid() { return Math.random().toString(36).slice(2); }
-
-const METODO_LABEL: Record<MetodoCalculo, string> = {
-  'harris-benedict':  'Harris-Benedict',
-  'fao-oms-onu':      'FAO/OMS/ONU',
-  'valencia':         'Valencia',
-  'mifflin-st-jeor':  'Mifflin-St Jeor',
-  'gramos-por-kilo':  'g/kg de peso',
-  'calorias-por-kilo':'kcal/kg de peso',
-};
 
 interface Props {
   get: number;
@@ -93,332 +73,134 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
   };
 
   const exportarPDF = async () => {
-    const logoDataUrl = await imgToDataUrl(logoSrc);
-    const imc = calcularIMC(patient.pesoActual, patient.talla);
-    const grHC   = Math.round((get * macros.hdec / 100) / 4);
-    const grProt = Math.round((get * macros.prot / 100) / 4);
-    const grLip  = Math.round((get * macros.lip  / 100) / 9);
-    const gruposActivos = grupos.filter(g => g.equivalentes > 0);
-    const totEq = gruposActivos.reduce(
-      (a, g) => ({ hc: a.hc + g.hdecPorEq*g.equivalentes, prot: a.prot + g.protPorEq*g.equivalentes,
-                   lip: a.lip + g.lipPorEq*g.equivalentes, cal: a.cal + g.calPorEq*g.equivalentes }),
-      { hc: 0, prot: 0, lip: 0, cal: 0 }
-    );
+    const source = document.getElementById('diet-plan-export');
+    if (!source) return;
 
-    const mealColors: Record<string, { bg: string; accent: string; light: string; text: string }> = {
-      'Al despertar': { bg: '#fef3c7', accent: '#d97706', light: '#fffbeb', text: '#78350f' },
-      'Desayuno':     { bg: '#d1fae5', accent: '#059669', light: '#f0fdf4', text: '#064e3b' },
-      'Medio día':    { bg: '#ffedd5', accent: '#ea580c', light: '#fff7ed', text: '#7c2d12' },
-      'Comida':       { bg: '#dbeafe', accent: '#2563eb', light: '#eff6ff', text: '#1e3a8a' },
-      'Media tarde':  { bg: '#ede9fe', accent: '#7c3aed', light: '#f5f3ff', text: '#4c1d95' },
-      'Cena':         { bg: '#e0e7ff', accent: '#4338ca', light: '#eef2ff', text: '#312e81' },
+    const ensureHtml2Pdf = () => new Promise<void>((resolve, reject) => {
+      const existing = (window as Window & { html2pdf?: unknown }).html2pdf;
+      if (existing) {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('No se pudo cargar el generador de PDF.'));
+      document.body.appendChild(script);
+    });
+
+    try {
+      await ensureHtml2Pdf();
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
+    const clone = source.cloneNode(true) as HTMLElement;
+    clone.id = 'diet-plan-export-pdf';
+    clone.style.position = 'fixed';
+    clone.style.left = '-9999px';
+    clone.style.top = '0';
+    clone.style.width = '794px';
+    clone.style.background = '#ffffff';
+    clone.style.zIndex = '2147483647';
+    clone.style.padding = '0';
+    clone.style.margin = '0';
+    clone.style.boxSizing = 'border-box';
+    clone.style.visibility = 'visible';
+    clone.style.overflow = 'visible';
+
+    const pdfStyle = document.createElement('style');
+    pdfStyle.textContent = `
+      @page { size: A4 portrait; margin: 10mm; }
+      html, body { margin: 0 !important; padding: 0 !important; background: #fff; }
+      body { font-family: 'Segoe UI', Arial, sans-serif; }
+      #diet-plan-export-pdf {
+        all: initial;
+        display: block !important;
+        width: 794px !important;
+        max-width: 794px !important;
+        background: #fff !important;
+        color: #0f172a !important;
+        font-family: 'Segoe UI', Arial, sans-serif !important;
+      }
+      #diet-plan-export-pdf * {
+        box-sizing: border-box !important;
+      }
+      #diet-plan-export-pdf .border-b,
+      #diet-plan-export-pdf .border-gray-100,
+      #diet-plan-export-pdf .border-gray-200,
+      #diet-plan-export-pdf .divide-y,
+      #diet-plan-export-pdf .divide-gray-50 {
+        border-color: rgba(148, 163, 184, 0.55) !important;
+      }
+      #diet-plan-export-pdf .shadow-sm,
+      #diet-plan-export-pdf .shadow {
+        box-shadow: none !important;
+      }
+      #diet-plan-export-pdf .overflow-hidden { overflow: visible !important; }
+      #diet-plan-export-pdf .min-h-64 { min-height: auto !important; }
+      #diet-plan-export-pdf .p-6 { padding: 1.25rem !important; }
+      #diet-plan-export-pdf .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+      #diet-plan-export-pdf .py-2 { padding-top: .5rem !important; padding-bottom: .5rem !important; }
+      #diet-plan-export-pdf .py-3 { padding-top: .75rem !important; padding-bottom: .75rem !important; }
+      #diet-plan-export-pdf .px-6 { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+      #diet-plan-export-pdf .text-xs { font-size: 11px !important; }
+      #diet-plan-export-pdf .text-sm { font-size: 12px !important; }
+      #diet-plan-export-pdf .text-gray-700 { color: #334155 !important; }
+      #diet-plan-export-pdf .text-gray-500 { color: #64748b !important; }
+      #diet-plan-export-pdf .bg-white { background: #fff !important; }
+      #diet-plan-export-pdf .bg-gray-50 { background: #f8fafc !important; }
+      #diet-plan-export-pdf .bg-emerald-500,
+      #diet-plan-export-pdf .bg-teal-500,
+      #diet-plan-export-pdf .bg-amber-500,
+      #diet-plan-export-pdf .bg-rose-500 {
+        box-shadow: none !important;
+      }
+    `;
+
+    document.body.appendChild(clone);
+    document.head.appendChild(pdfStyle);
+
+    const cleanup = () => {
+      pdfStyle.remove();
+      clone.remove();
     };
 
-    const nombreArchivo = `plan-nutricional-${patient.nombre.replace(/\s+/g, '-').toLowerCase()}`;
-    const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+    const html2pdf = (window as Window & { html2pdf?: (fn?: unknown) => any }).html2pdf;
+    if (!html2pdf) {
+      cleanup();
+      return;
+    }
 
-    const html = `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8"/>
-<title>Plan Nutricional – ${patient.nombre}</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #ffffff; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1e293b; }
-  #page { max-width: 820px; width: 100%; margin: 0 auto; background: #ffffff; padding: 16px 36px 40px; }
-
-  /* Header */
-  .doc-header { background-color: #1e3a8a; color: white; border-radius: 10px; padding: 16px 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 18px; }
-  .doc-header img { width: 90px; height: 90px; object-fit: contain; background: white; border-radius: 50%; padding: 4px; flex-shrink: 0; }
-  .doc-header h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
-  .doc-header .sub { font-size: 11px; opacity: 0.8; }
-
-  /* Section titles */
-  .section-title { font-size: 13px; font-weight: 700; color: #1e40af; border-left: 4px solid #3b82f6; padding: 4px 0 4px 10px; margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-  /* Info grid */
-  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-  .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px; }
-  .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; }
-  .info-card .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-  .info-card .val { font-size: 14px; font-weight: 700; color: #0f172a; }
-  .info-card.green { border-left: 3px solid #22c55e; }
-  .info-card.blue  { border-left: 3px solid #3b82f6; }
-  .info-card.amber { border-left: 3px solid #f59e0b; }
-  .info-card.red   { border-left: 3px solid #ef4444; }
-  .info-card.purple{ border-left: 3px solid #a855f7; }
-
-  /* Macros bar */
-  .macros-row { display: flex; gap: 8px; margin-bottom: 16px; }
-  .macro-pill { flex: 1; border-radius: 8px; padding: 8px 12px; text-align: center; }
-  .macro-pill .mp { font-size: 18px; font-weight: 800; }
-  .macro-pill .ml { font-size: 9px; opacity: 0.8; margin-top: 1px; }
-
-  /* Equivalents table */
-  .eq-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-  .eq-table thead tr { background: #1e40af; color: white; }
-  .eq-table thead th { padding: 7px 8px; font-size: 10px; font-weight: 600; text-align: center; }
-  .eq-table thead th:first-child { text-align: left; }
-  .eq-table tbody tr:nth-child(even) { background: #f8fafc; }
-  .eq-table tbody tr:hover { background: #eff6ff; }
-  .eq-table tbody td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
-  .eq-table tbody td:not(:first-child) { text-align: center; color: #374151; }
-  .eq-table tfoot .tot td { font-weight: 700; background: #dbeafe; padding: 6px 8px; border-top: 2px solid #93c5fd; }
-  .eq-table tfoot .tot td:not(:first-child) { text-align: center; color: #1e3a8a; }
-  .eq-table tfoot .meta td { font-size: 9px; color: #94a3b8; padding: 3px 8px; background: #f8fafc; }
-  .eq-table tfoot .meta td:not(:first-child) { text-align: center; }
-
-  /* Meal blocks */
-  .meal-block { border-radius: 10px; overflow: hidden; margin-bottom: 14px; border: 1px solid #e2e8f0; page-break-inside: avoid; }
-  .meal-header { padding: 8px 14px; font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 6px; }
-  .meal-body { padding: 10px 14px; background: white; }
-  .prep-block { margin-bottom: 10px; }
-  .prep-name { font-weight: 600; font-size: 11px; color: #374151; padding: 4px 8px; background: #f1f5f9; border-radius: 4px; margin-bottom: 4px; }
-  .ing-table { width: 100%; border-collapse: collapse; }
-  .ing-table thead tr { background: #334155; color: white; }
-  .ing-table thead th { padding: 4px 8px; font-size: 9px; font-weight: 600; }
-  .ing-table thead th:first-child { text-align: left; }
-  .ing-table thead th:not(:first-child) { text-align: center; }
-  .ing-table tbody tr:nth-child(even) { background: #f8fafc; }
-  .ing-table tbody td { padding: 3px 8px; border-bottom: 1px solid #f1f5f9; font-size: 10px; }
-  .ing-table tbody td:not(:first-child) { text-align: center; color: #475569; }
-
-  /* Editable hint */
-  [contenteditable="true"] { outline: none; border-radius: 2px; cursor: text; }
-  [contenteditable="true"]:hover { background: rgba(250,204,21,0.2); outline: 1px dashed #ca8a04; }
-  [contenteditable="true"]:focus { background: rgba(250,204,21,0.25); outline: 2px solid #ca8a04; }
-  .edit-hint { font-size: 9px; color: #94a3b8; text-align: right; margin-bottom: 6px; }
-
-  /* Download button */
-  #btn-download {
-    position: fixed; bottom: 24px; right: 24px;
-    background: #16a34a; color: white;
-    border: none; border-radius: 10px;
-    padding: 13px 26px; font-size: 14px; font-weight: 700;
-    cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-    display: flex; align-items: center; gap: 8px;
-    transition: background 0.2s;
-    z-index: 999;
-  }
-  #btn-download:hover { background: #15803d; }
-
-  @media print {
-    body { background: white; }
-    #btn-download { display: none !important; }
-    #page { padding: 16px; box-shadow: none; }
-  }
-</style>
-</head>
-<body>
-<div id="page">
-
-  <!-- Header -->
-  <div class="doc-header">
-    <img src="${logoDataUrl}" alt="Lic Nutrición" />
-    <div>
-      <h1>Plan Nutricional</h1>
-      <div class="sub">${fecha} &nbsp;·&nbsp; Elaborado con Sistema Nutricional</div>
-    </div>
-  </div>
-
-  <!-- Datos del paciente -->
-  <div class="section-title">Datos del Paciente</div>
-  <p class="edit-hint">💡 Haz clic en cualquier valor en <span style="background:rgba(250,204,21,0.3);padding:0 4px;border-radius:2px">amarillo</span> para editarlo antes de descargar</p>
-  <div class="grid3">
-    <div class="info-card blue">
-      <div class="lbl">Nombre</div>
-      <div class="val" contenteditable="true">${patient.nombre}</div>
-    </div>
-    <div class="info-card">
-      <div class="lbl">Edad</div>
-      <div class="val" contenteditable="true">${patient.edad} años</div>
-    </div>
-    <div class="info-card">
-      <div class="lbl">Sexo</div>
-      <div class="val">${patient.sexo === 'F' ? 'Femenino' : 'Masculino'}</div>
-    </div>
-    <div class="info-card amber">
-      <div class="lbl">Peso actual</div>
-      <div class="val" contenteditable="true">${patient.pesoActual} kg</div>
-    </div>
-    <div class="info-card green">
-      <div class="lbl">Peso ideal (Lorentz)</div>
-      <div class="val" contenteditable="true">${patient.pesoIdeal} kg</div>
-    </div>
-    <div class="info-card">
-      <div class="lbl">Talla</div>
-      <div class="val">${patient.talla} cm</div>
-    </div>
-  </div>
-  <div class="grid2" style="margin-top:8px">
-    <div class="info-card ${imc < 18.5 ? 'amber' : imc < 25 ? 'green' : imc < 30 ? 'amber' : 'red'}">
-      <div class="lbl">IMC</div>
-      <div class="val">${imc.toFixed(1)} &nbsp;<span style="font-size:11px;font-weight:400">– ${clasificarIMC(imc)}</span></div>
-    </div>
-    <div class="info-card purple">
-      <div class="lbl">Método de cálculo</div>
-      <div class="val" style="font-size:12px">${METODO_LABEL[metodo]}</div>
-    </div>
-  </div>
-
-  <!-- GET y macros -->
-  <div class="section-title">Requerimiento Energético</div>
-  <div class="info-card blue" style="margin-bottom:10px">
-    <div class="lbl">GET – Gasto Energético Total</div>
-    <div class="val" style="font-size:22px">${get} <span style="font-size:13px;font-weight:400">kcal/día</span></div>
-  </div>
-  <div class="macros-row">
-    <div class="macro-pill" style="background:#dbeafe;color:#1e3a8a">
-      <div class="mp">${macros.hdec}%</div>
-      <div class="ml">Hidratos de carbono</div>
-      <div style="font-size:13px;font-weight:700;margin-top:3px">${grHC} g</div>
-    </div>
-    <div class="macro-pill" style="background:#dcfce7;color:#14532d">
-      <div class="mp">${macros.prot}%</div>
-      <div class="ml">Proteínas</div>
-      <div style="font-size:13px;font-weight:700;margin-top:3px">${grProt} g</div>
-    </div>
-    <div class="macro-pill" style="background:#ffedd5;color:#7c2d12">
-      <div class="mp">${macros.lip}%</div>
-      <div class="ml">Lípidos</div>
-      <div style="font-size:13px;font-weight:700;margin-top:3px">${grLip} g</div>
-    </div>
-  </div>
-
-  <!-- Equivalentes -->
-  <div class="section-title">Equivalentes por Grupo Alimentario</div>
-  <table class="eq-table">
-    <thead>
-      <tr>
-        <th style="text-align:left">Grupo alimentario</th>
-        <th>Equiv.</th>
-        <th>HC (g)</th>
-        <th>Prot (g)</th>
-        <th>Lip (g)</th>
-        <th>Calorías</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${gruposActivos.map(g => `
-      <tr>
-        <td>${g.nombre}</td>
-        <td>${g.equivalentes}</td>
-        <td>${(g.hdecPorEq * g.equivalentes).toFixed(1)}</td>
-        <td>${(g.protPorEq * g.equivalentes).toFixed(1)}</td>
-        <td>${(g.lipPorEq  * g.equivalentes).toFixed(1)}</td>
-        <td>${(g.calPorEq  * g.equivalentes).toFixed(0)}</td>
-      </tr>`).join('')}
-    </tbody>
-    <tfoot>
-      <tr class="tot">
-        <td>Total</td><td></td>
-        <td>${totEq.hc.toFixed(1)}</td>
-        <td>${totEq.prot.toFixed(1)}</td>
-        <td>${totEq.lip.toFixed(1)}</td>
-        <td>${totEq.cal.toFixed(0)}</td>
-      </tr>
-      <tr class="meta">
-        <td>Meta</td><td></td>
-        <td>${grHC}</td>
-        <td>${grProt}</td>
-        <td>${grLip}</td>
-        <td>${get}</td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <!-- Plan de dieta -->
-  <div class="section-title" style="margin-top:24px">Plan de Dieta</div>
-  ${meals.map(meal => {
-    const c = mealColors[meal.nombre] || { bg: '#f1f5f9', accent: '#64748b', light: '#f8fafc', text: '#334155' };
-    return `
-  <div class="meal-block">
-    <div class="meal-header" style="background:${c.bg};color:${c.text};border-bottom:2px solid ${c.accent}">
-      <span style="width:10px;height:10px;border-radius:50%;background:${c.accent};display:inline-block"></span>
-      ${meal.nombre}
-    </div>
-    <div class="meal-body" style="background:${c.light}">
-      ${meal.preparaciones.length === 0
-        ? '<p style="color:#94a3b8;font-size:10px;margin:0">Sin preparaciones asignadas</p>'
-        : meal.preparaciones.map(prep => `
-      <div class="prep-block">
-        <div class="prep-name" contenteditable="true" style="border-left:3px solid ${c.accent}">${prep.nombre}</div>
-        <table class="ing-table">
-          <thead><tr>
-            <th>Alimento</th><th>Gramos</th><th>Equiv.</th><th>Unidad</th>
-          </tr></thead>
-          <tbody>
-            ${prep.ingredientes.map(ing => `
-            <tr>
-              <td contenteditable="true">${ing.nombre}</td>
-              <td contenteditable="true">${ing.gramos}</td>
-              <td>${ing.equivalente}</td>
-              <td contenteditable="true">${ing.unidad}</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`).join('')}
-    </div>
-  </div>`;
-  }).join('')}
-
-  <!-- Observaciones -->
-  <div class="section-title" style="margin-top:20px">Observaciones</div>
-  <div contenteditable="true" style="
-    min-height:60px; border:1px dashed #cbd5e1; border-radius:8px;
-    padding:10px 14px; font-size:11px; color:#64748b; line-height:1.6;
-  ">Escribe aquí cualquier indicación adicional para el paciente...</div>
-
-</div><!-- /#page -->
-
-<!-- Botón descarga fijo -->
-<button id="btn-download" onclick="descargar()">
-  ⬇ Descargar PDF
-</button>
-
-<script>
-function descargar() {
-  var btn = document.getElementById('btn-download');
-  btn.style.display = 'none';
-  setTimeout(function() {
-    var opt = {
-      margin:   [0, 0, 0, 0],
-      filename: '${nombreArchivo}.pdf',
-      image:    { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        onclone: function(clonedDoc) {
-          clonedDoc.documentElement.style.cssText = 'margin:0;padding:0;background:#ffffff;';
-          clonedDoc.body.style.cssText = 'margin:0;padding:0;background:#ffffff;';
-          var p = clonedDoc.getElementById('page');
-          if (p) {
-            p.style.maxWidth = '100%';
-            p.style.width = '794px';
-            p.style.margin = '0';
-            p.style.padding = '12px 20px 24px';
-            p.style.background = '#ffffff';
-          }
-        }
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(document.getElementById('page')).save()
-      .then(function() { btn.style.display = 'flex'; });
-  }, 300);
-}
-</script>
-</body></html>`;
-
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(html);
-    win.document.close();
-    win.focus();
+    try {
+      await html2pdf()
+        .set({
+          margin: [6, 6, 8, 6],
+          filename: `plan-nutricional-${patient.nombre.replace(/\s+/g, '-').toLowerCase()}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            scrollX: 0,
+            scrollY: 0,
+            width: 794,
+            windowWidth: 794,
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'] },
+        })
+        .from(clone)
+        .save();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      cleanup();
+    }
   };
 
   const addPrep = () => {
@@ -500,7 +282,7 @@ function descargar() {
   const mealNames = ['Al despertar', 'Desayuno', 'Medio día', 'Comida', 'Media tarde', 'Cena'];
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div id="diet-plan-export" className="max-w-5xl mx-auto">
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100">
