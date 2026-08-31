@@ -177,6 +177,8 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
     const sourcePlan = document.getElementById('patient-plan-export');
     if (!sourcePlan) return;
 
+    setSaveError('');
+
     // Renderiza una copia normal y medible para que html2canvas capture todo el plan.
     const planRoot = sourcePlan.cloneNode(true) as HTMLElement;
     planRoot.id = 'patient-plan-pdf-copy';
@@ -263,8 +265,6 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
             windowWidth: 794,
             windowHeight: Math.max(window.innerHeight, planRoot.scrollHeight),
             width: 794,
-            scrollX: 0,
-            scrollY: 0,
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['css', 'legacy'] },
@@ -425,6 +425,8 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
               )}
             </div>
           </div>
+
+          {saveError && <p className="text-xs text-red-500">{saveError}</p>}
 
           {loadingDiets && <span className="text-xs text-gray-400 flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> Cargando dietas...</span>}
           {diets && diets.length === 0 && <span className="text-xs text-gray-400">Sin dietas guardadas para este paciente.</span>}
