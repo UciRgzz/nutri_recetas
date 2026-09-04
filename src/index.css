@@ -13,6 +13,20 @@ body {
   min-height: 100vh;
 }
 
+aside {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+}
+
+aside::-webkit-scrollbar {
+  width: 6px;
+}
+
+aside::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+}
+
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;

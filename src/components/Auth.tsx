@@ -3,7 +3,7 @@ import type { FormEvent, ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { LucideIcon } from 'lucide-react';
 import {
-  LogIn, LogOut, UserPlus, Apple, Banana, Carrot, Cherry,
+  LogIn, UserPlus, Apple, Banana, Carrot, Cherry,
   Citrus, Grape, Leaf, LeafyGreen, Salad, Sprout, Wheat,
 } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase';
@@ -86,22 +86,7 @@ export function AuthGate({ children }: AuthProps) {
   if (loading) return <div className="min-h-screen grid place-items-center bg-slate-100 text-slate-500">Cargando...</div>;
   if (!session) return <AuthForm />;
 
-  return (
-    <>
-      <div className="fixed right-4 top-4 z-10 flex items-center gap-3 rounded-lg bg-white px-3 py-2 text-sm shadow-sm">
-        <span className="max-w-48 truncate text-slate-600">{session.user.email}</span>
-        <button
-          type="button"
-          title="Cerrar sesión"
-          onClick={() => void supabase?.auth.signOut()}
-          className="text-slate-500 transition-colors hover:text-red-600"
-        >
-          <LogOut size={18} />
-        </button>
-      </div>
-      {children(session)}
-    </>
-  );
+  return <>{children(session)}</>;
 }
 
 function AuthForm() {

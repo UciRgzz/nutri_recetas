@@ -111,7 +111,7 @@ function AppShell({ session }: { session: Session }) {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-emerald-50 via-slate-50 to-amber-50">
-      <aside className={`bg-emerald-600 flex flex-col items-stretch py-4 gap-2 flex-shrink-0 h-screen sticky top-0 overflow-y-auto transition-all duration-200 ${sidebarOpen ? 'w-56 px-3' : 'w-14 px-2 items-center'}`}>
+      <aside className={`bg-emerald-600 flex min-h-0 flex-col items-stretch py-4 gap-2 flex-shrink-0 h-screen sticky top-0 overflow-y-auto overscroll-contain transition-all duration-200 ${sidebarOpen ? 'w-56 px-3' : 'w-14 px-2 items-center'}`}>
         <div className={`flex items-center mb-2 ${sidebarOpen ? 'justify-between px-1' : 'flex-col gap-2'}`}>
           {sidebarOpen && (
             <img src={logoSrc} alt="Lic. Nutrición" className="h-8 w-8 rounded-full bg-white object-cover flex-shrink-0" />
