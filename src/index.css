@@ -54,3 +54,28 @@ input[type="range"]::-webkit-slider-thumb {
 .floating-blob {
   animation: blob-drift 14s ease-in-out infinite;
 }
+
+.recipe-grid {
+  background-image: linear-gradient(rgba(16, 185, 129, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(16, 185, 129, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+}
+
+@keyframes recipe-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-4deg); }
+  50% { transform: translate3d(var(--fruit-x, 10px), -14px, 0) rotate(8deg); }
+}
+
+.recipe-fruit {
+  animation: recipe-float 6s ease-in-out infinite;
+  animation-delay: var(--fruit-delay, 0s);
+  opacity: 0.72;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recipe-fruit,
+  .floating-icon,
+  .floating-blob {
+    animation: none;
+  }
+}

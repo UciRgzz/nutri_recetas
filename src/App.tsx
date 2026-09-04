@@ -19,6 +19,7 @@ import ComingSoonPanel from './components/ComingSoonPanel';
 import CalendarPanel from './components/CalendarPanel';
 import MyRecipesPanel from './components/MyRecipesPanel';
 import HomePanel from './components/HomePanel';
+import VideosPanel from './components/VideosPanel';
 import type { Patient, MetodoCalculo, MacroDistribution, FoodGroup, Meal } from './types';
 import { initGrupos } from './utils/foodGroups';
 import { activityLevels } from './utils/calculations';
@@ -28,7 +29,7 @@ import logoSrc from './assets/logo.png';
 
 const STEPS = ['Paciente', 'Calorías', 'Macros', 'Equivalentes', 'Dieta'];
 
-type View = 'home' | 'wizard' | 'patients' | 'recipes' | 'calendar' | 'my-recipes' | 'placeholder';
+type View = 'home' | 'wizard' | 'patients' | 'recipes' | 'calendar' | 'my-recipes' | 'videos' | 'placeholder';
 
 interface PlaceholderInfo {
   icon: ReactNode;
@@ -103,7 +104,7 @@ function AppShell({ session }: { session: Session }) {
     pending('Reportes de pagos', Receipt, 'Control de cobros y pagos de consultas.'),
     pending('Configuración', Settings, 'Ajustes de tu cuenta y del consultorio.'),
     pending('Ayuda', HelpCircle, 'Centro de ayuda y preguntas frecuentes.'),
-    pending('Videos', PlayCircle, 'Tutoriales en video sobre el uso del sistema.'),
+    { icon: <PlayCircle size={20} />, label: 'Videos', active: view === 'videos', onClick: () => setView('videos') },
     { icon: <LogOut size={20} />, label: 'Salir', active: false, onClick: () => { void supabase?.auth.signOut(); } },
   ];
 
@@ -185,6 +186,7 @@ function AppShell({ session }: { session: Session }) {
           {view === 'patients' && <PatientsPanel />}
           {view === 'calendar' && <CalendarPanel userId={session.user.id} />}
           {view === 'my-recipes' && <MyRecipesPanel />}
+          {view === 'videos' && <VideosPanel />}
           {view === 'recipes' && !recipeStarted && (
             <RecipesPanel onStart={() => { startFresh(); setRecipeStarted(true); }} />
           )}
