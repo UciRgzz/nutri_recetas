@@ -51,6 +51,7 @@ function AppShell({ session }: { session: Session }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [view, setView] = useState<View>('home');
   const [placeholder, setPlaceholder] = useState<PlaceholderInfo | null>(null);
+  const [patientStarted, setPatientStarted] = useState(false);
   const [recipeStarted, setRecipeStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [patient, setPatient] = useState<Patient>(blankPatient);
@@ -62,7 +63,7 @@ function AppShell({ session }: { session: Session }) {
   const [grupos, setGrupos] = useState<FoodGroup[]>(initGrupos());
   const [comidas, setComidas] = useState<Meal[]>([]);
 
-  const inWizard = view === 'wizard' || (view === 'recipes' && recipeStarted);
+  const inWizard = (view === 'wizard' && patientStarted) || (view === 'recipes' && recipeStarted);
 
   const startFresh = () => {
     setPatient(blankPatient());
@@ -90,7 +91,7 @@ function AppShell({ session }: { session: Session }) {
 
   const sidebarItems = [
     { icon: <Home size={20} />, label: 'Inicio', active: view === 'home', onClick: () => setView('home') },
-    { icon: <UserPlus size={20} />, label: 'Nuevo paciente', active: view === 'wizard', onClick: () => { setView('wizard'); setStep(0); } },
+    { icon: <UserPlus size={20} />, label: 'Nuevo paciente', active: view === 'wizard', onClick: () => { setView('wizard'); setPatientStarted(false); setStep(0); } },
     { icon: <Users size={20} />, label: 'Mis pacientes', active: view === 'patients', onClick: () => setView('patients') },
     { icon: <Calendar size={20} />, label: 'Calendario de citas', active: view === 'calendar', onClick: () => setView('calendar') },
     { icon: <ChefHat size={20} />, label: 'Crear receta', active: view === 'recipes', onClick: () => { setView('recipes'); setRecipeStarted(false); } },
@@ -177,18 +178,42 @@ function AppShell({ session }: { session: Session }) {
           {view === 'home' && (
             <HomePanel
               userEmail={session.user.email}
-              onNewPatient={() => { startFresh(); setView('wizard'); }}
+              onNewPatient={() => { startFresh(); setPatientStarted(true); setView('wizard'); }}
               onCreateRecipe={() => { setView('recipes'); setRecipeStarted(false); }}
               onPatients={() => setView('patients')}
               onCalendar={() => setView('calendar')}
             />
           )}
-          {view === 'patients' && <PatientsPanel />}
+          {view === 'patients' && <PatientsPanel onNewPatient={() => { startFresh(); setPatientStarted(true); setView('wizard'); }} />}
           {view === 'calendar' && <CalendarPanel userId={session.user.id} />}
           {view === 'my-recipes' && <MyRecipesPanel />}
           {view === 'videos' && <VideosPanel />}
           {view === 'recipes' && !recipeStarted && (
             <RecipesPanel onStart={() => { startFresh(); setRecipeStarted(true); }} />
+          )}
+          {view === 'wizard' && !patientStarted && (
+            <div className="mx-auto w-full max-w-5xl">
+              <section className="recipe-stage relative isolate overflow-hidden rounded-[2rem] border border-white/80 bg-[#fffdf8] px-6 py-14 shadow-[0_20px_60px_-30px_rgba(16,87,62,0.35)] sm:px-12 sm:py-20">
+                <div className="recipe-grid absolute inset-0 -z-10 opacity-60" />
+                <div className="absolute -left-24 -top-32 -z-10 h-80 w-80 rounded-full bg-emerald-200/40 blur-3xl" />
+                <div className="absolute -bottom-40 -right-24 -z-10 h-96 w-96 rounded-full bg-amber-200/45 blur-3xl" />
+                <div className="relative z-10 mx-auto flex max-w-xl flex-col items-center text-center">
+                  <div className="mb-6 grid h-20 w-20 place-items-center rounded-[1.75rem] bg-emerald-600 text-white shadow-lg shadow-emerald-600/25">
+                    <UserPlus size={38} strokeWidth={1.7} />
+                  </div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-700">Nuevo expediente</p>
+                  <h1 className="mt-3 font-serif text-4xl font-semibold tracking-tight text-slate-800 sm:text-5xl">Conoce a tu paciente</h1>
+                  <p className="mt-5 max-w-md text-sm leading-6 text-slate-500 sm:text-base">Registra sus datos para crear una valoración y un plan nutricional hecho a su medida.</p>
+                  <button
+                    type="button"
+                    onClick={() => { startFresh(); setPatientStarted(true); }}
+                    className="mt-8 flex items-center gap-3 rounded-full bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-700/20 transition duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                  >
+                    <UserPlus size={17} /> Crear nuevo paciente
+                  </button>
+                </div>
+              </section>
+            </div>
           )}
           {view === 'placeholder' && placeholder && (
             <ComingSoonPanel icon={placeholder.icon} title={placeholder.title} description={placeholder.description} />
@@ -247,7 +272,7 @@ function AppShell({ session }: { session: Session }) {
               userId={session.user.id}
               onChange={setComidas}
               onBack={() => setStep(3)}
-              onFinish={() => { setView('home'); setRecipeStarted(false); }}
+              onFinish={() => { setView('home'); setPatientStarted(false); setRecipeStarted(false); }}
             />
           )}
         </div>

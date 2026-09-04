@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, Loader2, Users, Pencil, Trash2, Check, X, Search, CalendarDays, FileText, Download } from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2, Users, UserPlus, Pencil, Trash2, Check, X, Search, CalendarDays, FileText, Download } from 'lucide-react';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 import { deletePatient, fetchPatients, fetchDietsForPatient, fetchDietMeals, updatePatient, type SavedPatient, type SavedDiet } from '../lib/patients';
 import { calcularIMC, clasificarIMC } from '../utils/calculations';
 import { abrirPlantillaSemanal } from '../utils/plantillaSemanal';
@@ -26,7 +28,7 @@ function toPatient(p: SavedPatient): Patient {
   };
 }
 
-export default function PatientsPanel() {
+export default function PatientsPanel({ onNewPatient }: { onNewPatient: () => void }) {
   const [patients, setPatients] = useState<SavedPatient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -68,10 +70,21 @@ export default function PatientsPanel() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-2xl shadow-sm p-6">
-        <h2 className="text-xl font-semibold text-gray-700 mb-1 flex items-center gap-2">
-          <Users size={20} className="text-emerald-500" /> Mis pacientes
-        </h2>
-        <p className="text-sm text-gray-400 mb-4">Historial de pacientes y dietas guardadas. Haz clic en un paciente para ver el detalle o editarlo.</p>
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-700 mb-1 flex items-center gap-2">
+              <Users size={20} className="text-emerald-500" /> Mis pacientes
+            </h2>
+            <p className="text-sm text-gray-400">Historial de pacientes y dietas guardadas. Haz clic en un paciente para ver el detalle o editarlo.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onNewPatient}
+            className="flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md"
+          >
+            <UserPlus size={15} /> Nuevo paciente
+          </button>
+        </div>
 
         {patients.length > 0 && (
           <div className="relative mb-4">
@@ -323,16 +336,41 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated, onDele
   };
 
   const remove = async () => {
-    const confirmed = window.confirm(`¿Eliminar a ${patient.name}? También se eliminarán sus dietas guardadas.`);
-    if (!confirmed) return;
+    const result = await Swal.fire({
+      title: '¿Eliminar paciente?',
+      text: `Se eliminarán ${patient.name} y sus dietas guardadas. Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      focusCancel: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+    });
+    if (!result.isConfirmed) return;
 
     setSaving(true);
     setSaveError('');
     try {
       await deletePatient(patient.id);
       onDeleted(patient.id);
+      await Swal.fire({
+        title: 'Paciente eliminado',
+        text: `${patient.name} se eliminó correctamente.`,
+        icon: 'success',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#059669',
+      });
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'No se pudo eliminar el paciente');
+      await Swal.fire({
+        title: 'No se pudo eliminar',
+        text: err instanceof Error ? err.message : 'Ocurrió un error inesperado.',
+        icon: 'error',
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#059669',
+      });
     } finally {
       setSaving(false);
     }
