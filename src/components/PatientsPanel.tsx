@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, Loader2, Users, Pencil, Check, X, Search, CalendarDays, FileText, Download } from 'lucide-react';
-import { fetchPatients, fetchDietsForPatient, fetchDietMeals, updatePatient, type SavedPatient, type SavedDiet } from '../lib/patients';
+import { ChevronDown, ChevronRight, Loader2, Users, Pencil, Trash2, Check, X, Search, CalendarDays, FileText, Download } from 'lucide-react';
+import { deletePatient, fetchPatients, fetchDietsForPatient, fetchDietMeals, updatePatient, type SavedPatient, type SavedDiet } from '../lib/patients';
 import { calcularIMC, clasificarIMC } from '../utils/calculations';
 import { abrirPlantillaSemanal } from '../utils/plantillaSemanal';
 import type { Patient, Meal } from '../types';
@@ -42,6 +42,11 @@ export default function PatientsPanel() {
 
   const handleUpdated = (updated: SavedPatient) => {
     setPatients(prev => prev.map(p => p.id === updated.id ? updated : p));
+  };
+
+  const handleDeleted = (patientId: string) => {
+    setPatients(prev => prev.filter(p => p.id !== patientId));
+    setExpandedPatient(current => current === patientId ? null : current);
   };
 
   if (loading) {
@@ -98,6 +103,7 @@ export default function PatientsPanel() {
                 onToggle={() => setExpandedPatient(expandedPatient === patient.id ? null : patient.id)}
                 onOpenPlan={() => setExpandedPatient(patient.id)}
                 onUpdated={handleUpdated}
+                onDeleted={handleDeleted}
               />
             ))}
           </div>
@@ -107,12 +113,13 @@ export default function PatientsPanel() {
   );
 }
 
-function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
+function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated, onDeleted }: {
   patient: SavedPatient;
   expanded: boolean;
   onToggle: () => void;
   onOpenPlan: () => void;
   onUpdated: (updated: SavedPatient) => void;
+  onDeleted: (patientId: string) => void;
 }) {
   const [diets, setDiets] = useState<SavedDiet[] | null>(null);
   const [autoOpenDietId, setAutoOpenDietId] = useState<string | null>(null);
@@ -315,6 +322,22 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
     }
   };
 
+  const remove = async () => {
+    const confirmed = window.confirm(`¿Eliminar a ${patient.name}? También se eliminarán sus dietas guardadas.`);
+    if (!confirmed) return;
+
+    setSaving(true);
+    setSaveError('');
+    try {
+      await deletePatient(patient.id);
+      onDeleted(patient.id);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'No se pudo eliminar el paciente');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const imc = patient.current_weight > 0 && patient.height_cm > 0
     ? calcularIMC(patient.current_weight, patient.height_cm)
     : null;
@@ -378,6 +401,14 @@ function PatientRow({ patient, expanded, onToggle, onOpenPlan, onUpdated }: {
         </button>
         <button onClick={startEdit} title="Editar paciente" className="text-gray-400 hover:text-emerald-600 p-1">
           <Pencil size={14} />
+        </button>
+        <button
+          onClick={() => { void remove(); }}
+          title="Eliminar paciente"
+          disabled={saving}
+          className="p-1 text-gray-400 transition-colors hover:text-red-500 disabled:opacity-50"
+        >
+          <Trash2 size={14} />
         </button>
         <button
           onClick={onOpenPlan}

@@ -133,6 +133,16 @@ export async function updatePatient(patientId: string, patient: Patient): Promis
   if (error) throw error;
 }
 
+// Elimina un paciente y sus dietas asociadas
+export async function deletePatient(patientId: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase no está configurado');
+  const { error } = await supabase
+    .from('patients')
+    .delete()
+    .eq('id', patientId);
+  if (error) throw error;
+}
+
 // Guarda un paciente y su dieta actual (paciente + dieta + comidas + ingredientes)
 export async function savePatientDiet(
   userId: string,
