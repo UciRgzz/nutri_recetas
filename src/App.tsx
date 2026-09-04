@@ -247,6 +247,7 @@ function AppShell({ session }: { session: Session }) {
               userId={session.user.id}
               onChange={setComidas}
               onBack={() => setStep(3)}
+              onFinish={() => { setView('home'); setRecipeStarted(false); }}
             />
           )}
         </div>

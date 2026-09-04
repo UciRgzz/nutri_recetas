@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Meal, Preparation, Ingredient, FoodGroup, Patient, MacroDistribution, MetodoCalculo } from '../types';
 import {
   Plus, Trash2, AlarmClock, UtensilsCrossed, Sun, Sunset,
-  Moon, Coffee, ArrowLeft, Printer, RefreshCw, CalendarDays, Save, Check,
+  Moon, Coffee, ArrowLeft, Printer, RefreshCw, CalendarDays, Save, Check, Home,
 } from 'lucide-react';
 import { AlarmClockOff } from 'lucide-react';
 import { generateDiet, calcEquivTable } from '../utils/dietGenerator';
@@ -21,6 +21,12 @@ const MEAL_ICONS: Record<string, React.ReactNode> = {
 
 function uid() { return Math.random().toString(36).slice(2); }
 
+type Html2Pdf = () => {
+  set: (options: Record<string, unknown>) => {
+    from: (element: HTMLElement) => { save: () => Promise<void> };
+  };
+};
+
 interface Props {
   get: number;
   patient: Patient;
@@ -31,14 +37,16 @@ interface Props {
   userId: string;
   onChange: (meals: Meal[]) => void;
   onBack: () => void;
+  onFinish: () => void;
 }
 
-export default function DietPlan({ get, patient, macros, metodo, grupos, comidas, userId, onChange, onBack }: Props) {
+export default function DietPlan({ get, patient, macros, metodo, grupos, comidas, userId, onChange, onBack, onFinish }: Props) {
   const [activeTab, setActiveTab] = useState('Al despertar');
   const [bottomTab, setBottomTab] = useState<'nutrimentos' | 'equivalentes'>('equivalentes');
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const [errorGuardar, setErrorGuardar] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   // Auto-generate on mount (always generate fresh diet when arriving at this step)
   useEffect(() => {
@@ -49,6 +57,7 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
 
   const meals = comidas.length > 0 ? comidas : [];
   const activeMeal = meals.find(m => m.nombre === activeTab);
+  const displayedMeals = exporting ? meals : activeMeal ? [activeMeal] : [];
 
   const updateMeals = (updated: Meal[]) => onChange(updated);
 
@@ -73,8 +82,12 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
   };
 
   const exportarPDF = async () => {
-    const lib = (window as Window & { html2pdf?: (opts?: unknown) => any }).html2pdf;
+    setExporting(true);
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+
+    const lib = (window as Window & { html2pdf?: Html2Pdf }).html2pdf;
     if (!lib) {
+      setExporting(false);
       const script = document.createElement('script');
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
       script.async = true;
@@ -86,12 +99,18 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
     }
 
     const target = document.getElementById('diet-plan-export');
-    if (!target) return;
+    if (!target) {
+      setExporting(false);
+      return;
+    }
 
     const filename = `plan-nutricional-${patient.nombre.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.pdf`;
 
-    const html2pdf = (window as Window & { html2pdf?: (opts?: unknown) => any }).html2pdf;
-    if (!html2pdf) return;
+    const html2pdf = (window as Window & { html2pdf?: Html2Pdf }).html2pdf;
+    if (!html2pdf) {
+      setExporting(false);
+      return;
+    }
 
     try {
       await html2pdf()
@@ -112,6 +131,8 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
         .save();
     } catch (error) {
       console.error('Error al exportar PDF del plan:', error);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -263,13 +284,13 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
 
         {/* Meal content */}
         <div className="p-6 min-h-64">
-          {activeMeal && (
-            <>
+          {displayedMeals.map(meal => (
+            <div key={meal.id}>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white">
                   <UtensilsCrossed size={14} />
                 </div>
-                <span className="font-medium text-gray-700">{activeMeal.nombre}</span>
+                <span className="font-medium text-gray-700">{meal.nombre}</span>
                 <div className="ml-auto flex items-center gap-2 text-gray-400 text-xs">
                   <AlarmClock size={13} />
                   <span>--:-- -----</span>
@@ -277,7 +298,7 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
               </div>
 
               <div className="flex flex-col gap-3">
-                {activeMeal.preparaciones.map(prep => (
+                {meal.preparaciones.map(prep => (
                   <div key={prep.id} className="border border-gray-200 rounded-xl overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
                       <input
@@ -349,8 +370,8 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
                   <Plus size={13} /> Preparación
                 </button>
               </div>
-            </>
-          )}
+            </div>
+          ))}
         </div>
 
         {/* Bottom summary */}
@@ -408,6 +429,16 @@ export default function DietPlan({ get, patient, macros, metodo, grupos, comidas
               <NutrimentosTab grupos={grupos} />
             </div>
           )}
+        </div>
+
+        <div className="flex justify-end border-t border-gray-100 px-6 py-4">
+          <button
+            type="button"
+            onClick={onFinish}
+            className="flex items-center gap-2 rounded-lg border border-emerald-200 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50"
+          >
+            <Home size={15} /> Terminar y volver al inicio
+          </button>
         </div>
       </div>
     </div>
